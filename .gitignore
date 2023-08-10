@@ -1,0 +1,9 @@
+.codelite
+.ctagsd
+*/.clang-format
+*/.clangd
+Makefile
+build-*
+docs
+*/*.mk
+compile_commands.json
