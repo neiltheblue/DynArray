@@ -3,14 +3,17 @@
 #include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <time.h>
 #include <zcmocka.h>
 
 DEFINE_DYNARRAY_TYPE(long, dynArrayLong, dynArrayLng)
 DEFINE_DYNARRAY_TYPE(float, dynArrayFloat, dynArrayFlt)
+DEFINE_DYNARRAY_TYPE(double, dynArrayDouble, dynArrayDbl)
 
 dynArrayLong *pDALng;
 dynArrayFloat *pDAFlt;
+dynArrayDouble *pDADbl;
 
 void test_new(void **state) {
   pDALng = dynArrayLngDefault();
@@ -89,14 +92,28 @@ void test_floatType(void **state) {
   pDAFlt = dynArrayFltDefault();
 
   for (i = 0; i < max; i++) {
-    getDA(pDALng, i, &value);
-    assert_int_equal(value, 0);
     value = i * 0.5;
-    setDAdynArrayFlt(pDAFlt, i, value);
+    addDAdynArrayFlt(pDAFlt, value);
   }
 
   for (i = 0; i < max; i++) {
     getDAdynArrayFlt(pDAFlt, i, &value);
+    assert_float_equal(value, i * 0.5, 0.01);
+  }
+}
+
+void test_doubleType(void **state) {
+  size_t i, max = 10;
+  double value;
+  pDADbl = dynArrayDblDefault();
+
+  for (i = 0; i < max; i++) {
+    value = i * 0.5;
+    addDAdynArrayDbl(pDADbl, value);
+  }
+
+  for (i = 0; i < max; i++) {
+    getDAdynArrayDbl(pDADbl, i, &value);
     assert_float_equal(value, i * 0.5, 0.01);
   }
 }
@@ -134,6 +151,7 @@ void test_growing(void **state) {
 int setup(void **state) {
   pDALng = NULL;
   pDAFlt = NULL;
+  pDADbl = NULL;
   return 0;
 }
 
@@ -142,6 +160,8 @@ int teardown(void **state) {
   pDALng = NULL;
   freeDA(pDAFlt);
   pDAFlt = NULL;
+  freeDA(pDADbl);
+  pDADbl = NULL;
   return 0;
 }
 
@@ -153,7 +173,8 @@ int main(void) {
       cmocka_unit_test(test_addDA),
       cmocka_unit_test(test_getDA),
       cmocka_unit_test(test_setDA),
-	  cmocka_unit_test(test_floatType),
+      cmocka_unit_test(test_floatType),
+      cmocka_unit_test(test_doubleType),
       cmocka_unit_test(test_growing),
   };
 
