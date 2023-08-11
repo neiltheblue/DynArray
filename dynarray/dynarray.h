@@ -26,6 +26,7 @@
 #define DECLARE_DYNARRAY_TYPE(TYPE, NAME)                                      \
                                                                                \
   typedef struct DynamicArrayStruct_##TYPE {                                   \
+    size_t elementSize;                                                        \
     size_t size;                                                               \
     size_t capacity;                                                           \
     float growth;                                                              \
@@ -44,6 +45,7 @@
  * @private
  */
 typedef struct DynamicArrayStructVoid {
+  size_t elementSize;
   size_t size;
   size_t capacity;
   float growth;

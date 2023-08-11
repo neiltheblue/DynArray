@@ -54,6 +54,7 @@ void *_createDynArray(
   pVDA->capacity = params.capacity;
   pVDA->growth = params.growth;
   pVDA->size = params.size;
+  pVDA->elementSize = elementSize;
   pVDA->set = setter;
   pVDA->get = getter;
   pVDA->array = safeCalloc(pVDA->capacity, elementSize);
@@ -66,7 +67,7 @@ size_t addDA(void *pDA, const void *value) {
 
   while (index >= pVDA->capacity) {
     pVDA->capacity *= pVDA->growth;
-    pVDA->array = safeReallocarray(pVDA->array, pVDA->capacity, sizeof(long));
+    pVDA->array = safeReallocarray(pVDA->array, pVDA->capacity, pVDA->elementSize);
   }
 
   return setDA(pDA, index, value);
