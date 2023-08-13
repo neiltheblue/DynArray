@@ -62,7 +62,7 @@ void *_createDynArray(
   return pVDA;
 }
 
-void extendCapacity(_dynArrayVoid *pVDA) {
+void _extendCapacity(_dynArrayVoid *pVDA) {
   if (pVDA->size >= pVDA->capacity) {
     while (pVDA->size >= pVDA->capacity) {
       pVDA->capacity *= pVDA->growth;
@@ -74,10 +74,10 @@ void extendCapacity(_dynArrayVoid *pVDA) {
 
 size_t addAllDA(void *pDA, const void *src, size_t first, size_t length) {
   _dynArrayVoid *pVDA = pDA;
-  size_t lastIndex=pVDA->size;
+  size_t lastIndex = pVDA->size;
   pVDA->size += length;
 
-  extendCapacity(pVDA);
+  _extendCapacity(pVDA);
 
   void *dest = pVDA->array + (lastIndex * pVDA->elementSize);
   memcpy(dest, src + (first * pVDA->elementSize), pVDA->elementSize * length);
@@ -89,7 +89,7 @@ size_t addDA(void *pDA, const void *value) {
   _dynArrayVoid *pVDA = pDA;
   pVDA->size++;
 
-  extendCapacity(pVDA);
+  _extendCapacity(pVDA);
 
   return setDA(pDA, pVDA->size - 1, value);
 }
