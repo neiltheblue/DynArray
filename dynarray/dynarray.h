@@ -1,6 +1,22 @@
 #ifndef DYN_ARRAY
 #define DYN_ARRAY
 
+/**
+ * @file dynarray.h
+ *
+ * @brief Dynamic Array header file
+ *
+ * TODO list:
+ *
+ * - quick sort
+ * - dirty flag for add
+ * - dirty flag for set
+ * - add free spare memory
+ * - array reverse
+ * - array copy
+ *
+ */
+
 #include <stdio.h>
 
 /**
@@ -39,7 +55,10 @@
                                                                                \
   void getDA##NAME(const NAME *pDA, const size_t index, TYPE *value);          \
                                                                                \
-  size_t addDA##NAME(const NAME *pDA, TYPE value);
+  size_t addDA##NAME(const NAME *pDA, TYPE value);                             \
+                                                                               \
+  size_t addAllDA##NAME(const NAME *pDA, const TYPE *src, size_t first,        \
+                        size_t length);
 
 /**
  * @private
@@ -104,6 +123,11 @@ typedef struct DynamicArrayStructVoid {
   }                                                                            \
                                                                                \
   size_t addDA##NAME(STRUCT *pDA, TYPE value) { return addDA(pDA, &value); }   \
+                                                                               \
+  size_t addAllDA##NAME(STRUCT *pDA, const TYPE *src, size_t first,            \
+                        size_t length) {                                       \
+    return addAllDA(pDA, src, first, length);                                  \
+  }                                                                            \
                                                                                \
   void _setter_##NAME(const void *pDA, const size_t index,                     \
                       const void *value) {                                     \
@@ -182,6 +206,16 @@ size_t setDA(const void *pDA, const size_t index, const void *value);
  * @return the updated index
  */
 size_t addDA(void *pDA, const void *value);
+
+/**
+ * @brief Add a dynamic array value
+ * @param pDA the array pointer to update
+ * @param src the source value array
+ * @param first the first index to add
+ * @param length the number of elements to copy
+ * @return the last updated index
+ */
+size_t addAllDA(void *pDA, const void *src, size_t first, size_t length);
 
 /**
  * @brief Get a dynamic array value

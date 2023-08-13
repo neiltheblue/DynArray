@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "dynarray.h"
 
@@ -61,21 +62,40 @@ void *_createDynArray(
   return pVDA;
 }
 
+void extendCapacity(_dynArrayVoid *pVDA) {
+  if (pVDA->size >= pVDA->capacity) {
+    while (pVDA->size >= pVDA->capacity) {
+      pVDA->capacity *= pVDA->growth;
+    }
+    pVDA->array =
+        safeReallocarray(pVDA->array, pVDA->capacity, pVDA->elementSize);
+  }
+}
+
+size_t addAllDA(void *pDA, const void *src, size_t first, size_t length) {
+  _dynArrayVoid *pVDA = pDA;
+  size_t lastIndex=pVDA->size;
+  pVDA->size += length;
+
+  extendCapacity(pVDA);
+
+  void *dest = pVDA->array + (lastIndex * pVDA->elementSize);
+  memcpy(dest, src + (first * pVDA->elementSize), pVDA->elementSize * length);
+
+  return pVDA->size - 1;
+}
+
 size_t addDA(void *pDA, const void *value) {
   _dynArrayVoid *pVDA = pDA;
-  size_t index = pVDA->size++;
+  pVDA->size++;
 
-  while (index >= pVDA->capacity) {
-    pVDA->capacity *= pVDA->growth;
-    pVDA->array = safeReallocarray(pVDA->array, pVDA->capacity, pVDA->elementSize);
-  }
+  extendCapacity(pVDA);
 
-  return setDA(pDA, index, value);
+  return setDA(pDA, pVDA->size - 1, value);
 }
 
 size_t setDA(const void *pDA, const size_t index, const void *value) {
   _dynArrayVoid *pVDA = (_dynArrayVoid *)pDA;
-  size_t idx = index;
   if (index >= 0 && index < pVDA->size) {
     pVDA->set(pDA, index, value);
   } else {
@@ -83,9 +103,10 @@ size_t setDA(const void *pDA, const size_t index, const void *value) {
     fprintf(stderr, "Index out of range: %ld, array size: %ld", index,
             pVDA->size);
 #endif // DEBUG
-    idx = -1;
+    return -1;
   }
-  return idx;
+
+  return index;
 }
 
 void getDA(const void *pDA, const size_t index, void *value) {

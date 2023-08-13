@@ -45,11 +45,40 @@ void test_addDA(void **state) {
 
   size_t i, max = 18;
   for (i = 0; i < max; i++) {
-    addDAdynArrayLng(pDALng, i);
+    assert_int_equal(addDAdynArrayLng(pDALng, i), i);
   }
 
   assert_int_equal(pDALng->capacity, 22);
   assert_int_equal(pDALng->size, max);
+}
+
+void test_addAllDA(void **state) {
+  pDALng = dynArrayLngDefault();
+
+  assert_int_equal(addAllDAdynArrayLng(
+                       pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 0, 10),
+                   9);
+
+  int i;
+  long value;
+  for (i = 0; i < 10; i++) {
+    getDAdynArrayLng(pDALng, i, &value);
+    assert_int_equal(value, i);
+  }
+
+  assert_int_equal(
+      addAllDAdynArrayLng(
+          pDALng, (long[]){10, 11, 12, 13, 14, 15, 16, 17, 18, 19}, 0, 10),
+      19);
+  for (i = 0; i < 20; i++) {
+    getDAdynArrayLng(pDALng, i, &value);
+    assert_int_equal(value, i);
+  }
+
+  for (i = 20; i < 30; i++) {
+    assert_int_equal(addDAdynArrayLng(pDALng, i), i);
+  }
+  assert_int_equal(pDALng->size, 30);
 }
 
 void test_getDA(void **state) {
@@ -77,7 +106,7 @@ void test_setDA(void **state) {
     getDA(pDALng, i, &value);
     assert_int_equal(value, 0);
     value = i * 10;
-    setDAdynArrayLng(pDALng, i, value);
+    assert_int_equal(setDAdynArrayLng(pDALng, i, value), i);
   }
 
   for (i = 0; i < max; i++) {
@@ -171,11 +200,14 @@ int main(void) {
       cmocka_unit_test(test_new_params),
       cmocka_unit_test(test_new_params_limits),
       cmocka_unit_test(test_addDA),
+      cmocka_unit_test(test_addAllDA),
       cmocka_unit_test(test_getDA),
       cmocka_unit_test(test_setDA),
       cmocka_unit_test(test_floatType),
       cmocka_unit_test(test_doubleType),
+#ifdef PERF
       cmocka_unit_test(test_growing),
+#endif // PERF
   };
 
   /* If setup and teardown functions are not
