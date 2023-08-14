@@ -55,9 +55,9 @@ void test_addDA(void **state) {
 void test_addAllDA(void **state) {
   pDALng = dynArrayLngDefault();
 
-  assert_int_equal(addAllDAdynArrayLng(
-                       pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 0, 10),
-                   9);
+  assert_int_equal(
+      addAllDAdynArrayLng(pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10),
+      9);
 
   int i;
   long value;
@@ -67,8 +67,8 @@ void test_addAllDA(void **state) {
   }
 
   assert_int_equal(
-      addAllDAdynArrayLng(
-          pDALng, (long[]){10, 11, 12, 13, 14, 15, 16, 17, 18, 19}, 0, 10),
+      addAllDAdynArrayLng(pDALng,
+                          (long[]){10, 11, 12, 13, 14, 15, 16, 17, 18, 19}, 10),
       19);
   for (i = 0; i < 20; i++) {
     getDAdynArrayLng(pDALng, i, &value);
@@ -147,6 +147,23 @@ void test_doubleType(void **state) {
   }
 }
 
+void test_quickSort(void **state) {
+  pDALng = dynArrayLngDefault();
+
+ long arr[] = {8,7,6,1,0,9,2,6,0};
+  long sorted[] = {0,0,1,2,6,6,7,8,9};
+  addAllDAdynArrayLng(pDALng, arr, 9);
+
+  sortDAdynArrayLng(pDALng, dynArrayLngCompare);
+  long value;
+  for (int i = 0; i < 9; i++) {
+    getDAdynArrayLng(pDALng, i, &value);
+    printf("%ld ", value);
+    assert_int_equal(value, sorted[i]);
+  }
+  printf("\n");
+}
+
 void test_growing(void **state) {
   size_t i, max = 10, capacity, range;
   clock_t start_t, end_t;
@@ -205,6 +222,7 @@ int main(void) {
       cmocka_unit_test(test_setDA),
       cmocka_unit_test(test_floatType),
       cmocka_unit_test(test_doubleType),
+      cmocka_unit_test(test_quickSort),
 #ifdef PERF
       cmocka_unit_test(test_growing),
 #endif // PERF

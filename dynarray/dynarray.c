@@ -5,39 +5,35 @@
 #include "dynarray.h"
 
 /**
- * @brief Safe calloc with out-of-memory handling
- * @param count the number of elements
- * @param size the size of each element
+ * @private
  */
-void *safeCalloc(const size_t count, const size_t size) {
+void *_safeCalloc(const size_t count, const size_t size) {
   void *rtn;
   if ((rtn = calloc(count, size)) == NULL && errno == ENOMEM) {
-    printf("Out of memory\n");
-    exit(EXIT_FAILURE);
+    EXIT_ERROR("Out of memory while allocating. Count: %lu, Size: %lu\n", count,
+               size);
   }
   return rtn;
 }
 
 /**
- * @brief Safe reallocarray with out-of-memory handling
- * @param ptr the pointer to reallocate
- * @param count the number of elements to allocate
- * @param size the size of each element
+ * @private
  */
-void *safeReallocarray(void *ptr, const size_t count, const size_t size) {
+void *_safeReallocarray(void *ptr, const size_t count, const size_t size) {
   void *rtn;
   if ((rtn = reallocarray(ptr, count, size)) == NULL && errno == ENOMEM) {
-    printf("Out of memory\n");
-    exit(EXIT_FAILURE);
+    EXIT_ERROR("Out of memory while reallocating. Count: %lu, Size: %lu\n",
+               count, size);
   }
   return rtn;
 }
 
-void *_createDynArray(
-    DynArrayParams params, size_t structSize, size_t elementSize,
-    void (*setter)(const void *pDA, const size_t index, const void *value),
-    void (*getter)(const void *pDA, const size_t index, void *value)) {
-  _dynArrayVoid *pVDA;
+/**
+ * @private
+ */
+void *_createDynArray(DynArrayParams params, size_t structSize,
+                      size_t elementSize) {
+  _dynArrayAny *pADA;
 
   if (params.capacity < 2) {
     params.capacity = 2;
@@ -51,58 +47,113 @@ void *_createDynArray(
   if (params.size >= params.capacity) {
     params.capacity = params.size;
   }
-  pVDA = safeCalloc(1, structSize);
-  pVDA->capacity = params.capacity;
-  pVDA->growth = params.growth;
-  pVDA->size = params.size;
-  pVDA->elementSize = elementSize;
-  pVDA->set = setter;
-  pVDA->get = getter;
-  pVDA->array = safeCalloc(pVDA->capacity, elementSize);
-  return pVDA;
+  pADA = _safeCalloc(1, structSize);
+  pADA->capacity = params.capacity;
+  pADA->growth = params.growth;
+  pADA->size = params.size;
+  pADA->elementSize = elementSize;
+  pADA->temp = _safeCalloc(1, elementSize);
+  pADA->array = _safeCalloc(pADA->capacity, elementSize);
+  return pADA;
 }
 
-void _extendCapacity(_dynArrayVoid *pVDA) {
-  if (pVDA->size >= pVDA->capacity) {
-    while (pVDA->size >= pVDA->capacity) {
-      pVDA->capacity *= pVDA->growth;
+/**
+ * @private
+ */
+void _extendCapacity(_dynArrayAny *pADA) {
+  if (pADA->size >= pADA->capacity) {
+    while (pADA->size >= pADA->capacity) {
+      pADA->capacity *= pADA->growth;
     }
-    pVDA->array =
-        safeReallocarray(pVDA->array, pVDA->capacity, pVDA->elementSize);
+    pADA->array =
+        _safeReallocarray(pADA->array, pADA->capacity, pADA->elementSize);
   }
 }
 
-size_t addAllDA(void *pDA, const void *src, size_t first, size_t length) {
-  _dynArrayVoid *pVDA = pDA;
-  size_t lastIndex = pVDA->size;
-  pVDA->size += length;
-
-  _extendCapacity(pVDA);
-
-  void *dest = pVDA->array + (lastIndex * pVDA->elementSize);
-  memcpy(dest, src + (first * pVDA->elementSize), pVDA->elementSize * length);
-
-  return pVDA->size - 1;
+/**
+ * @private
+ */
+void _swap(_dynArrayAny *pADA, void *a, void *b) {
+  if (a != b) {
+    memcpy(pADA->temp, a, pADA->elementSize);
+    memcpy(a, b, pADA->elementSize);
+    memcpy(b, pADA->temp, pADA->elementSize);
+  }
 }
 
-size_t addDA(void *pDA, const void *value) {
-  _dynArrayVoid *pVDA = pDA;
-  pVDA->size++;
-
-  _extendCapacity(pVDA);
-
-  return setDA(pDA, pVDA->size - 1, value);
+/**
+ * @private
+ */
+void *_toPtr(_dynArrayAny *pADA, size_t index) {
+  return pADA->array + (index * pADA->elementSize);
 }
+
+/**
+ * @private
+ */
+size_t _partition(_dynArrayAny *pADA, size_t low, size_t high,
+                  int cmp(void *a, void *b)) {
+  void *pivot = _toPtr(pADA, high);
+  void *pLow = _toPtr(pADA, low);
+  size_t i = low;
+
+  for (void *j = pLow; j < pivot; j += pADA->elementSize) {
+
+    if (cmp(j, pivot) < 0) {
+      _swap(pADA, _toPtr(pADA, i), j);
+      i++;
+    }
+  }
+  _swap(pADA, _toPtr(pADA, i), pivot);
+  return i;
+}
+
+/**
+ * @private
+ */
+void _quickSort(_dynArrayAny *pADA, size_t low, size_t high,
+                int cmp(void *a, void *b)) {
+  if (low < high) {
+
+    size_t pi = _partition(pADA, low, high, cmp);
+
+    if (pi > 0) {
+      _quickSort(pADA, low, pi - 1, cmp);
+    }
+    _quickSort(pADA, low + 1, high, cmp);
+  }
+}
+
+/**
+ * @private
+ */
+void sortDA(void *pDA, int cmp(void *a, void *b)) {
+	_dynArrayAny *pADA = pDA;
+  _quickSort(pADA, 0, pADA->size - 1, cmp);
+}
+
+size_t addAllDA(void *pDA, const void *src, size_t length) {
+  _dynArrayAny *pADA = pDA;
+  size_t lastIndex = pADA->size;
+  pADA->size += length;
+
+  _extendCapacity(pADA);
+
+  void *dest = _toPtr(pADA, lastIndex);
+  memcpy(dest, src, pADA->elementSize * length);
+
+  return pADA->size - 1;
+}
+
+size_t addDA(void *pDA, const void *value) { return addAllDA(pDA, value, 1); }
 
 size_t setDA(const void *pDA, const size_t index, const void *value) {
-  _dynArrayVoid *pVDA = (_dynArrayVoid *)pDA;
-  if (index >= 0 && index < pVDA->size) {
-    pVDA->set(pDA, index, value);
+  _dynArrayAny *pADA = (_dynArrayAny *)pDA;
+
+  if (index >= 0 && index < pADA->size) {
+    memcpy(pADA->array + (index * pADA->elementSize), value, pADA->elementSize);
   } else {
-#ifdef DEBUG
-    fprintf(stderr, "Index out of range: %ld, array size: %ld", index,
-            pVDA->size);
-#endif // DEBUG
+    DEBUG_LOG("Index out of range: %ld, array size: %ld", index, pADA->size);
     return -1;
   }
 
@@ -110,28 +161,19 @@ size_t setDA(const void *pDA, const size_t index, const void *value) {
 }
 
 void getDA(const void *pDA, const size_t index, void *value) {
-  _dynArrayVoid *pVDA = (_dynArrayVoid *)pDA;
-  if (index >= 0 && index < pVDA->size) {
-    pVDA->get(pDA, index, value);
+  _dynArrayAny *pADA = (_dynArrayAny *)pDA;
+
+  if (index >= 0 && index < pADA->size) {
+    memcpy(value, pADA->array + (index * pADA->elementSize), pADA->elementSize);
   } else {
-#ifdef DEBUG
-    fprintf(stderr, "Index out of range: %ld, array size: %ld", index,
-            pVDA->size);
-    dumpDA(pDA, stderr);
-#endif // DEBUG
+    DEBUG_LOG("Index out of range: %ld, array size: %ld", index, pADA->size);
   }
 }
 
 void freeDA(void *pDA) {
   if (pDA) {
-    free(((_dynArrayVoid *)pDA)->array);
+    free(((_dynArrayAny *)pDA)->temp);
+    free(((_dynArrayAny *)pDA)->array);
     free(pDA);
   }
-}
-
-void dumpDA(const void *pDA, FILE *stream) {
-  _dynArrayVoid *pVDA = (_dynArrayVoid *)pDA;
-  fprintf(stream,
-          "DynArray:\n\tSize:%ld\n\tCapacity:%ld\n\tGrowth:%f\n\tArray:%p\n",
-          pVDA->size, pVDA->capacity, pVDA->growth, pVDA->array);
 }
