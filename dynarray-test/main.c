@@ -1,5 +1,6 @@
 #include "main.h"
 
+#include "dynarray.h"
 #include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
@@ -7,24 +8,25 @@
 #include <time.h>
 #include <zcmocka.h>
 
-DEFINE_DYNARRAY_TYPE(long, dynArrayLong, dynArrayLng)
-DEFINE_DYNARRAY_TYPE(float, dynArrayFloat, dynArrayFlt)
-DEFINE_DYNARRAY_TYPE(double, dynArrayDouble, dynArrayDbl)
+DEFINE_DYNARRAY_TYPE(long, dynArrayLng)
+DEFINE_DYNARRAY_TYPE(float, dynArrayFlt)
+DEFINE_DYNARRAY_TYPE(double, dynArrayDbl)
 
-dynArrayLong *pDALng;
-dynArrayFloat *pDAFlt;
-dynArrayDouble *pDADbl;
+dynArray *pDALng;
+dynArray *pDAFlt;
+dynArray *pDADbl;
 
 void test_new(void **state) {
-  pDALng = dynArrayLngDefault();
+  pDALng = dynArrayLng(NULL);
 
   assert_int_equal(pDALng->capacity, 10);
   assert_float_equal(pDALng->growth, 1.5, 0.0);
 }
 
 void test_new_params(void **state) {
-  pDALng =
-      dynArrayLng((DynArrayParams){.capacity = 20, .growth = 2.5, .size = 5});
+  dynArrayParams params =
+      (dynArrayParams){.capacity = 20, .growth = 2.5, .size = 5};
+  pDALng = dynArrayLng(&params);
 
   assert_int_equal(pDALng->capacity, 20);
   assert_float_equal(pDALng->growth, 2.5, 0.0);
@@ -32,8 +34,9 @@ void test_new_params(void **state) {
 }
 
 void test_new_params_limits(void **state) {
-  pDALng =
-      dynArrayLng((DynArrayParams){.capacity = 20, .growth = 0.5, .size = 25});
+  dynArrayParams params =
+      (dynArrayParams){.capacity = 20, .growth = 0.5, .size = 25};
+  pDALng = dynArrayLng(&params);
 
   assert_int_equal(pDALng->capacity, 25);
   assert_float_equal(pDALng->growth, 1.5, 0.0);
@@ -41,7 +44,7 @@ void test_new_params_limits(void **state) {
 }
 
 void test_addDA(void **state) {
-  pDALng = dynArrayLngDefault();
+  pDALng = dynArrayLng(NULL);
 
   size_t i, max = 18;
   for (i = 0; i < max; i++) {
@@ -53,7 +56,7 @@ void test_addDA(void **state) {
 }
 
 void test_addAllDA(void **state) {
-  pDALng = dynArrayLngDefault();
+  pDALng = dynArrayLng(NULL);
 
   assert_int_equal(
       addAllDAdynArrayLng(pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10),
@@ -82,7 +85,7 @@ void test_addAllDA(void **state) {
 }
 
 void test_getDA(void **state) {
-  pDALng = dynArrayLngDefault();
+  pDALng = dynArrayLng(NULL);
 
   size_t max = pDALng->capacity;
   long i;
@@ -100,7 +103,8 @@ void test_getDA(void **state) {
 void test_setDA(void **state) {
   size_t i, max = 10;
   long value;
-  pDALng = dynArrayLng((DynArrayParams){.size = 10});
+  dynArrayParams params = (dynArrayParams){.size = 10};
+  pDALng = dynArrayLng(&params);
 
   for (i = 0; i < max; i++) {
     getDA(pDALng, i, &value);
@@ -118,7 +122,7 @@ void test_setDA(void **state) {
 void test_floatType(void **state) {
   size_t i, max = 10;
   float value;
-  pDAFlt = dynArrayFltDefault();
+  pDAFlt = dynArrayFlt(NULL);
 
   for (i = 0; i < max; i++) {
     value = i * 0.5;
@@ -134,7 +138,7 @@ void test_floatType(void **state) {
 void test_doubleType(void **state) {
   size_t i, max = 10;
   double value;
-  pDADbl = dynArrayDblDefault();
+  pDADbl = dynArrayDbl(NULL);
 
   for (i = 0; i < max; i++) {
     value = i * 0.5;
@@ -148,20 +152,18 @@ void test_doubleType(void **state) {
 }
 
 void test_quickSort(void **state) {
-  pDALng = dynArrayLngDefault();
+  pDALng = dynArrayLng(NULL);
 
- long arr[] = {8,7,6,1,0,9,2,6,0};
-  long sorted[] = {0,0,1,2,6,6,7,8,9};
+  long arr[] = {8, 7, 6, 1, 0, 9, 2, 6, 0};
+  long sorted[] = {0, 0, 1, 2, 6, 6, 7, 8, 9};
   addAllDAdynArrayLng(pDALng, arr, 9);
 
   sortDAdynArrayLng(pDALng, dynArrayLngCompare);
   long value;
   for (int i = 0; i < 9; i++) {
     getDAdynArrayLng(pDALng, i, &value);
-    printf("%ld ", value);
     assert_int_equal(value, sorted[i]);
   }
-  printf("\n");
 }
 
 void test_growing(void **state) {
@@ -175,8 +177,9 @@ void test_growing(void **state) {
       printf("Capacity:%lu\tGrowth:%f\n", capacity, growth);
       for (range = 100000; range <= 10000000; range *= 10) {
         max = range;
-        pDALng = dynArrayLng(
-            (DynArrayParams){.capacity = capacity, .growth = growth});
+        dynArrayParams params =
+            (dynArrayParams){.capacity = capacity, .growth = growth};
+        pDALng = dynArrayLng(&params);
         start_t = clock();
         for (i = 0; i < max; i++) {
           addDAdynArrayLng(pDALng, (long)i);

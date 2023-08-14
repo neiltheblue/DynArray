@@ -31,26 +31,30 @@ void *_safeReallocarray(void *ptr, const size_t count, const size_t size) {
 /**
  * @private
  */
-void *_createDynArray(DynArrayParams params, size_t structSize,
-                      size_t elementSize) {
-  _dynArrayAny *pADA;
+dynArray *_createDynArray(dynArrayParams *params, size_t elementSize) {
+  dynArray *pADA;
+  
+  if(params==NULL)
+  {
+	  params=&((dynArrayParams){.size=0,.growth=1.5,.capacity=10});
+   }
 
-  if (params.capacity < 2) {
-    params.capacity = 2;
+  if (params->capacity < 2) {
+    params->capacity = 2;
   }
-  if (params.growth <= 1.0) {
-    params.growth = 1.5;
+  if (params->growth <= 1.0) {
+    params->growth = 1.5;
   }
-  if (params.size < 0) {
-    params.size = 0;
+  if (params->size < 0) {
+    params->size = 0;
   }
-  if (params.size >= params.capacity) {
-    params.capacity = params.size;
+  if (params->size >= params->capacity) {
+    params->capacity = params->size;
   }
-  pADA = _safeCalloc(1, structSize);
-  pADA->capacity = params.capacity;
-  pADA->growth = params.growth;
-  pADA->size = params.size;
+  pADA = _safeCalloc(1, sizeof(dynArray));
+  pADA->capacity = params->capacity;
+  pADA->growth = params->growth;
+  pADA->size = params->size;
   pADA->elementSize = elementSize;
   pADA->temp = _safeCalloc(1, elementSize);
   pADA->array = _safeCalloc(pADA->capacity, elementSize);
@@ -60,7 +64,7 @@ void *_createDynArray(DynArrayParams params, size_t structSize,
 /**
  * @private
  */
-void _extendCapacity(_dynArrayAny *pADA) {
+void _extendCapacity(dynArray *pADA) {
   if (pADA->size >= pADA->capacity) {
     while (pADA->size >= pADA->capacity) {
       pADA->capacity *= pADA->growth;
@@ -73,7 +77,7 @@ void _extendCapacity(_dynArrayAny *pADA) {
 /**
  * @private
  */
-void _swap(_dynArrayAny *pADA, void *a, void *b) {
+void _swap(dynArray *pADA, void *a, void *b) {
   if (a != b) {
     memcpy(pADA->temp, a, pADA->elementSize);
     memcpy(a, b, pADA->elementSize);
@@ -84,14 +88,14 @@ void _swap(_dynArrayAny *pADA, void *a, void *b) {
 /**
  * @private
  */
-void *_toPtr(_dynArrayAny *pADA, size_t index) {
+void *_toPtr(dynArray *pADA, size_t index) {
   return pADA->array + (index * pADA->elementSize);
 }
 
 /**
  * @private
  */
-size_t _partition(_dynArrayAny *pADA, size_t low, size_t high,
+size_t _partition(dynArray *pADA, size_t low, size_t high,
                   int cmp(void *a, void *b)) {
   void *pivot = _toPtr(pADA, high);
   void *pLow = _toPtr(pADA, low);
@@ -111,7 +115,7 @@ size_t _partition(_dynArrayAny *pADA, size_t low, size_t high,
 /**
  * @private
  */
-void _quickSort(_dynArrayAny *pADA, size_t low, size_t high,
+void _quickSort(dynArray *pADA, size_t low, size_t high,
                 int cmp(void *a, void *b)) {
   if (low < high) {
 
@@ -128,12 +132,12 @@ void _quickSort(_dynArrayAny *pADA, size_t low, size_t high,
  * @private
  */
 void sortDA(void *pDA, int cmp(void *a, void *b)) {
-	_dynArrayAny *pADA = pDA;
+  dynArray *pADA = pDA;
   _quickSort(pADA, 0, pADA->size - 1, cmp);
 }
 
 size_t addAllDA(void *pDA, const void *src, size_t length) {
-  _dynArrayAny *pADA = pDA;
+  dynArray *pADA = pDA;
   size_t lastIndex = pADA->size;
   pADA->size += length;
 
@@ -148,7 +152,7 @@ size_t addAllDA(void *pDA, const void *src, size_t length) {
 size_t addDA(void *pDA, const void *value) { return addAllDA(pDA, value, 1); }
 
 size_t setDA(const void *pDA, const size_t index, const void *value) {
-  _dynArrayAny *pADA = (_dynArrayAny *)pDA;
+  dynArray *pADA = (dynArray *)pDA;
 
   if (index >= 0 && index < pADA->size) {
     memcpy(pADA->array + (index * pADA->elementSize), value, pADA->elementSize);
@@ -161,7 +165,7 @@ size_t setDA(const void *pDA, const size_t index, const void *value) {
 }
 
 void getDA(const void *pDA, const size_t index, void *value) {
-  _dynArrayAny *pADA = (_dynArrayAny *)pDA;
+  dynArray *pADA = (dynArray *)pDA;
 
   if (index >= 0 && index < pADA->size) {
     memcpy(value, pADA->array + (index * pADA->elementSize), pADA->elementSize);
@@ -172,8 +176,8 @@ void getDA(const void *pDA, const size_t index, void *value) {
 
 void freeDA(void *pDA) {
   if (pDA) {
-    free(((_dynArrayAny *)pDA)->temp);
-    free(((_dynArrayAny *)pDA)->array);
+    free(((dynArray *)pDA)->temp);
+    free(((dynArray *)pDA)->array);
     free(pDA);
   }
 }
