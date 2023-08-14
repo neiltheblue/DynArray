@@ -45,13 +45,13 @@ void test_addDA(void **state) {
   pDALng = createDA(sizeof(long), NULL);
 
   size_t i, max = 18;
-  assert_int_equal(pDALng->dirtyAdd, 0);
-  assert_int_equal(pDALng->dirtySort, 0);
+  assert_int_equal(pDALng->dirtyAdd, false);
+  assert_int_equal(pDALng->dirtySort, false);
   for (i = 0; i < max; i++) {
     assert_int_equal(addDA(pDALng, &i), i);
   }
-  assert_int_equal(pDALng->dirtyAdd, 1);
-  assert_int_equal(pDALng->dirtySort, 1);
+  assert_int_equal(pDALng->dirtyAdd, true);
+  assert_int_equal(pDALng->dirtySort, true);
 
   assert_int_equal(pDALng->capacity, 22);
   assert_int_equal(pDALng->size, max);
@@ -108,16 +108,16 @@ void test_setDA(void **state) {
   dynArrayParams params = (dynArrayParams){.size = 10};
   pDALng = createDA(sizeof(long), &params);
 
-  assert_int_equal(pDALng->dirtyAdd, 0);
-  assert_int_equal(pDALng->dirtySort, 0);
+  assert_int_equal(pDALng->dirtyAdd, false);
+  assert_int_equal(pDALng->dirtySort, false);
   for (i = 0; i < max; i++) {
     getDA(pDALng, i, &value);
     assert_int_equal(value, 0);
     value = i * 10;
     assert_int_equal(setDA(pDALng, i, &value), true);
   }
-  assert_int_equal(pDALng->dirtyAdd, 0);
-  assert_int_equal(pDALng->dirtySort, 1);
+  assert_int_equal(pDALng->dirtyAdd, false);
+  assert_int_equal(pDALng->dirtySort, true);
   
   assert_int_equal(setDA(pDALng, 100, &value), false);
 
@@ -162,20 +162,20 @@ void test_doubleType(void **state) {
 void test_quickSort(void **state) {
   pDALng = createDA(sizeof(long), NULL);
 
-  assert_int_equal(pDALng->dirtyAdd, 0);
-  assert_int_equal(pDALng->dirtySort, 0);
+  assert_int_equal(pDALng->dirtyAdd, false);
+  assert_int_equal(pDALng->dirtySort, false);
   long arr[] = {8, 7, 6, 1, 0, 9, 2, 6, 0};
   long sorted[] = {0, 0, 1, 2, 6, 6, 7, 8, 9};
   addAllDA(pDALng, arr, 9);
-  assert_int_equal(pDALng->dirtyAdd, 1);
-  assert_int_equal(pDALng->dirtySort, 1);
+  assert_int_equal(pDALng->dirtyAdd, true);
+  assert_int_equal(pDALng->dirtySort, true);
 
   assert_int_equal(sortDA(pDALng, compareDAlong), true);
-  assert_int_equal(pDALng->dirtyAdd, 0);
-  assert_int_equal(pDALng->dirtySort, 0);
+  assert_int_equal(pDALng->dirtyAdd, false);
+  assert_int_equal(pDALng->dirtySort, false);
   assert_int_equal(sortDA(pDALng, compareDAlong), false);
-  assert_int_equal(pDALng->dirtyAdd, 0);
-  assert_int_equal(pDALng->dirtySort, 0);
+  assert_int_equal(pDALng->dirtyAdd, false);
+  assert_int_equal(pDALng->dirtySort, false);
   long value;
   for (int i = 0; i < 9; i++) {
     getDA(pDALng, i, &value);

@@ -39,14 +39,14 @@
  * @brief Dynamic array dynArray declaration
  */
 typedef struct DynamicArray {
-  size_t elementSize;
-  size_t size;
-  size_t capacity;
-  float growth;
-  void *array;
-  void *temp;
-  unsigned int dirtyAdd : 1;
-  unsigned int dirtySort : 1;
+  size_t elementSize; ///< the element size
+  size_t size;        ///< the array size
+  size_t capacity;    ///< the array capacity
+  float growth;       ///< the array growth rate
+  void *array;        ///< the array
+  void *temp;         ///< the temp element store
+  bool dirtyAdd : 1;  ///< the dirty added data flag
+  bool dirtySort : 1; ///< the dirty sorted data flag
 } dynArray;
 
 /**
@@ -188,6 +188,6 @@ dynArray *copyDA(dynArray *pDA);
  * @return 'true' if the value was found
  */
 bool searchDA(dynArray *pDA, int cmp(void *a, void *b), void *value,
-                  size_t *index);
+              size_t *index);
 
 #endif // DYN_ARRAY

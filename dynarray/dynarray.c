@@ -170,8 +170,8 @@ bool sortDA(dynArray *pDA, int cmp(void *a, void *b)) {
     sorted = true;
     _quickSort(pDA, 0, pDA->size - 1, cmp);
 
-    pDA->dirtyAdd = 0;
-    pDA->dirtySort = 0;
+    pDA->dirtyAdd = false;
+    pDA->dirtySort = false;
   }
 
   return sorted;
@@ -186,8 +186,8 @@ size_t addAllDA(dynArray *pDA, const void *src, size_t length) {
   void *dest = _toPtr(pDA, lastIndex);
   memcpy(dest, src, pDA->elementSize * length);
 
-  pDA->dirtyAdd = 1;
-  pDA->dirtySort = 1;
+  pDA->dirtyAdd = true;
+  pDA->dirtySort = true;
 
   return pDA->size - 1;
 }
@@ -201,7 +201,7 @@ bool setDA(dynArray *pDA, const size_t index, const void *value) {
   
   if (index >= 0 && index < pDA->size) {
     memcpy(pDA->array + (index * pDA->elementSize), value, pDA->elementSize);
-    pDA->dirtySort = 1;
+    pDA->dirtySort = true;
   } else {
     DEBUG_LOG("Index out of range: %ld, array size: %ld\n", index, pDA->size);
     ok = false;
