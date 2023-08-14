@@ -182,6 +182,13 @@ void getDA(const dynArray *pDA, const size_t index, void *value) {
   }
 }
 
+void reverseDA(dynArray *pDA) {
+  size_t half = pDA->size / 2;
+  for (size_t i = 0; i < half; i++) {
+    _swap(pDA, _toPtr(pDA, i), _toPtr(pDA, pDA->size - i - 1));
+  }
+}
+
 void reduceMemDA(dynArray *pDA) {
   if (pDA && pDA->capacity > pDA->size) {
     pDA->capacity = pDA->size;

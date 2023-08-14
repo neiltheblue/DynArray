@@ -196,6 +196,43 @@ void test_memRelease(void **state) {
   }
 }
 
+void test_reverse(void **state) {
+  pDALng = createDynArray(sizeof(long), NULL);
+
+  long arr[] = {0, 0, 1, 2, 6, 6, 7, 8, 9};
+  addAllDA(pDALng, arr, 9);
+
+  long value;
+  for (int i = 0; i < 9; i++) {
+    getDA(pDALng, i, &value);
+    assert_int_equal(value, arr[i]);
+  }
+
+  reverseDA(pDALng);
+
+  for (int i = 0; i < 9; i++) {
+    getDA(pDALng, i, &value);
+    assert_int_equal(value, arr[8 - i]);
+  }
+
+  pDAFlt = createDynArray(sizeof(float), NULL);
+  float arrEven[] = {0.0, 0.0, 1.0, 2.0, 6.0, 6.0, 7.0, 8.0};
+  addAllDA(pDAFlt, arrEven, 8);
+  float fValue;
+
+  for (int i = 0; i < 8; i++) {
+    getDA(pDAFlt, i, &fValue);
+    assert_float_equal(fValue, arrEven[i], 0.0);
+  }
+
+  reverseDA(pDAFlt);
+
+  for (int i = 0; i < 8; i++) {
+    getDA(pDAFlt, i, &fValue);
+    assert_float_equal(fValue, arrEven[7 - i], 0.0);
+  }
+}
+
 void test_growing(void **state) {
   size_t i, max = 10, capacity, range;
   clock_t start_t, end_t;
@@ -259,6 +296,7 @@ int main(void) {
       cmocka_unit_test(test_doubleType),
       cmocka_unit_test(test_quickSort),
       cmocka_unit_test(test_memRelease),
+      cmocka_unit_test(test_reverse),
 #ifdef PERF
       cmocka_unit_test(test_growing),
 #endif // PERF

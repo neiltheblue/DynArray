@@ -8,8 +8,8 @@
  *
  * TODO list:
  *
- * - array reverse
  * - array copy
+ * - add binary search
  *
  */
 
@@ -153,5 +153,11 @@ void getDA(const dynArray *pDA, const size_t index, void *value);
  * @param cmp the comparative function to apply
  */
 void sortDA(dynArray *pDA, int cmp(void *a, void *b));
+
+/**
+ * @brief Reverse the array
+ * @param pDA the array pointer to reverse 
+ */
+void reverseDA(dynArray *pDA);
 
 #endif // DYN_ARRAY
