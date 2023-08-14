@@ -94,6 +94,45 @@ void _quickSort(dynArray *pDA, size_t low, size_t high,
   }
 }
 
+/**
+ * @private
+ */
+bool _binarySearch(dynArray *pDA, int cmp(void *a, void *b), void *value,
+                   size_t *index, size_t min, size_t max) {
+  bool found = false;
+  size_t diff = max - min;
+
+  if (diff == 0) {
+    if (cmp(value, _toPtr(pDA, min)) == 0) {
+      found = true;
+      *index = min;
+    }
+  } else {
+    size_t mid = min + (diff / 2);
+    int result = cmp(value, _toPtr(pDA, mid));
+    if (result == 0) {
+      found = true;
+      *index = mid;
+    } else if (result == -1) {
+      found = _binarySearch(pDA, cmp, value, index, min, mid);
+    } else {
+      found = _binarySearch(pDA, cmp, value, index, mid + 1, max);
+    }
+  }
+
+  return found;
+}
+
+bool searchDA(dynArray *pDA, int cmp(void *a, void *b), void *value,
+                  size_t *index) {
+  bool found = false;
+  if (pDA->size > 0) {
+    sortDA(pDA, cmp);
+    found = _binarySearch(pDA, cmp, value, index, 0, pDA->size - 1);
+  }
+  return found;
+}
+
 dynArray *createDA(size_t elementSize, dynArrayParams *params) {
   dynArray *pDA;
 
@@ -125,13 +164,17 @@ dynArray *createDA(size_t elementSize, dynArrayParams *params) {
   return pDA;
 }
 
-void sortDA(dynArray *pDA, int cmp(void *a, void *b)) {
+bool sortDA(dynArray *pDA, int cmp(void *a, void *b)) {
+  bool sorted = false;
   if (pDA->dirtyAdd || pDA->dirtySort) {
+    sorted = true;
     _quickSort(pDA, 0, pDA->size - 1, cmp);
 
     pDA->dirtyAdd = 0;
     pDA->dirtySort = 0;
   }
+
+  return sorted;
 }
 
 size_t addAllDA(dynArray *pDA, const void *src, size_t length) {
@@ -153,27 +196,30 @@ size_t addDA(dynArray *pDA, const void *value) {
   return addAllDA(pDA, value, 1);
 }
 
-size_t setDA(dynArray *pDA, const size_t index, const void *value) {
-
+bool setDA(dynArray *pDA, const size_t index, const void *value) {
+  bool ok = true;
+  
   if (index >= 0 && index < pDA->size) {
     memcpy(pDA->array + (index * pDA->elementSize), value, pDA->elementSize);
+    pDA->dirtySort = 1;
   } else {
-    DEBUG_LOG("Index out of range: %ld, array size: %ld", index, pDA->size);
-    return -1;
+    DEBUG_LOG("Index out of range: %ld, array size: %ld\n", index, pDA->size);
+    ok = false;
   }
 
-  pDA->dirtySort = 1;
-
-  return index;
+  return ok;
 }
 
-void getDA(const dynArray *pDA, const size_t index, void *value) {
+bool getDA(const dynArray *pDA, const size_t index, void *value) {
 
+  bool ok = true;
   if (index >= 0 && index < pDA->size) {
     memcpy(value, pDA->array + (index * pDA->elementSize), pDA->elementSize);
   } else {
-    DEBUG_LOG("Index out of range: %ld, array size: %ld", index, pDA->size);
+    DEBUG_LOG("Index out of range: %ld, array size: %ld\n", index, pDA->size);
+    ok = false;
   }
+  return ok;
 }
 
 void reverseDA(dynArray *pDA) {
@@ -191,7 +237,6 @@ void reduceMemDA(dynArray *pDA) {
 }
 
 dynArray *copyDA(dynArray *pDA) {
-
   dynArray *copy =
       createDA(pDA->elementSize,
                &(dynArrayParams){.size = pDA->size, .growth = pDA->growth});

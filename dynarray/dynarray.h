@@ -8,13 +8,12 @@
  *
  * TODO list:
  *
- * - array copy
- * - add binary search
  * - subarray
  * - add DA (will also deep copy if applied to empty array)
  *
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 
 #ifdef DEBUG
@@ -120,9 +119,9 @@ void reduceMemDA(dynArray *pDA);
  * @param pDA the array pointer to update
  * @param index the index to set
  * @param value the value to apply
- * @return the updated index
+ * @return 'true' if the index was in range
  */
-size_t setDA(dynArray *pDA, const size_t index, const void *value);
+bool setDA(dynArray *pDA, const size_t index, const void *value);
 
 /**
  * @brief Add a dynamic array value
@@ -146,15 +145,20 @@ size_t addAllDA(dynArray *pDA, const void *src, size_t length);
  * @param pDA the array pointer to update
  * @param index the index to read
  * @param value the value pointer to set
+ * @return 'true' if the index was in range
  */
-void getDA(const dynArray *pDA, const size_t index, void *value);
+bool getDA(const dynArray *pDA, const size_t index, void *value);
 
 /**
  * @brief Sort the array
+ *
+ * The array will only be sorted if it is dirty
+ *
  * @param pDA the array pointer to update
  * @param cmp the comparative function to apply
+ * @return 'true' if a sort was performed
  */
-void sortDA(dynArray *pDA, int cmp(void *a, void *b));
+bool sortDA(dynArray *pDA, int cmp(void *a, void *b));
 
 /**
  * @brief Reverse the array
@@ -171,5 +175,19 @@ void reverseDA(dynArray *pDA);
  * @return the copied array
  */
 dynArray *copyDA(dynArray *pDA);
+
+/**
+ * @brief Perform a binary search for the value
+ *
+ * If not already in order, the array will be sorted.
+ *
+ * @param pDA the array pointer to search
+ * @param cmp the compare function
+ * @param value the value to search for
+ * @param index the retuned index if found
+ * @return 'true' if the value was found
+ */
+bool searchDA(dynArray *pDA, int cmp(void *a, void *b), void *value,
+                  size_t *index);
 
 #endif // DYN_ARRAY

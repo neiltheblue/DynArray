@@ -95,9 +95,11 @@ void test_getDA(void **state) {
 
   long value = 0;
   for (i = 0; i < max; i++) {
-    getDA(pDALng, i, &value);
+    assert_int_equal(getDA(pDALng, i, &value), true);
     assert_int_equal(value, i);
   }
+  
+  assert_int_equal(getDA(pDALng, 100, &value), false);
 }
 
 void test_setDA(void **state) {
@@ -112,10 +114,12 @@ void test_setDA(void **state) {
     getDA(pDALng, i, &value);
     assert_int_equal(value, 0);
     value = i * 10;
-    assert_int_equal(setDA(pDALng, i, &value), i);
+    assert_int_equal(setDA(pDALng, i, &value), true);
   }
   assert_int_equal(pDALng->dirtyAdd, 0);
   assert_int_equal(pDALng->dirtySort, 1);
+  
+  assert_int_equal(setDA(pDALng, 100, &value), false);
 
   for (i = 0; i < max; i++) {
     getDA(pDALng, i, &value);
@@ -166,10 +170,10 @@ void test_quickSort(void **state) {
   assert_int_equal(pDALng->dirtyAdd, 1);
   assert_int_equal(pDALng->dirtySort, 1);
 
-  sortDA(pDALng, compareDAlong);
+  assert_int_equal(sortDA(pDALng, compareDAlong), true);
   assert_int_equal(pDALng->dirtyAdd, 0);
   assert_int_equal(pDALng->dirtySort, 0);
-  sortDA(pDALng, compareDAlong);
+  assert_int_equal(sortDA(pDALng, compareDAlong), false);
   assert_int_equal(pDALng->dirtyAdd, 0);
   assert_int_equal(pDALng->dirtySort, 0);
   long value;
@@ -248,8 +252,64 @@ void test_copy(void **state) {
     assert_int_equal(value, arr[i]);
   }
   assert_int_equal(copy->size, pDALng->size);
+  assert_int_equal(copy->growth, pDALng->growth);
 
   freeDA(copy);
+}
+
+void test_binSearch(void **state) {
+  pDALng = createDA(sizeof(long), NULL);
+  long value;
+  size_t index;
+  assert_int_equal(searchDA(pDALng, compareDAlong, &value, &index), false);
+
+  value = 10;
+  addDA(pDALng, &value);
+  value = 9;
+  assert_int_equal(searchDA(pDALng, compareDAlong, &value, &index), false);
+
+  value = 10;
+  assert_int_equal(searchDA(pDALng, compareDAlong, &value, &index), true);
+  assert_int_equal(index, 0);
+
+  value = 11;
+  addDA(pDALng, &value);
+  value = 9;
+  assert_int_equal(searchDA(pDALng, compareDAlong, &value, &index), false);
+
+  value = 10;
+  assert_int_equal(searchDA(pDALng, compareDAlong, &value, &index), true);
+  assert_int_equal(index, 0);
+
+  value = 11;
+  assert_int_equal(searchDA(pDALng, compareDAlong, &value, &index), true);
+  assert_int_equal(index, 1);
+
+  long arr[] = {0, 0, 1, 2, 6, 6, 7, 8, 9};
+  addAllDA(pDALng, arr, 9);
+
+  value = 7;
+  assert_int_equal(searchDA(pDALng, compareDAlong, &value, &index), true);
+  getDA(pDALng, index, &value);
+  assert_int_equal(value, 7);
+
+  value = 6;
+  assert_int_equal(searchDA(pDALng, compareDAlong, &value, &index), true);
+  getDA(pDALng, index, &value);
+  assert_int_equal(value, 6);
+
+  value = 0;
+  assert_int_equal(searchDA(pDALng, compareDAlong, &value, &index), true);
+  getDA(pDALng, index, &value);
+  assert_int_equal(value, 0);
+
+  value = 11;
+  assert_int_equal(searchDA(pDALng, compareDAlong, &value, &index), true);
+  getDA(pDALng, index, &value);
+  assert_int_equal(value, 11);
+
+  value = 12;
+  assert_int_equal(searchDA(pDALng, compareDAlong, &value, &index), false);
 }
 
 void test_growing(void **state) {
@@ -317,6 +377,7 @@ int main(void) {
       cmocka_unit_test(test_memRelease),
       cmocka_unit_test(test_reverse),
       cmocka_unit_test(test_copy),
+      cmocka_unit_test(test_binSearch),
 #ifdef PERF
       cmocka_unit_test(test_growing),
 #endif // PERF
