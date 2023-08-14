@@ -10,6 +10,8 @@
  *
  * - array copy
  * - add binary search
+ * - subarray
+ * - add DA (will also deep copy if applied to empty array)
  *
  */
 
@@ -96,7 +98,7 @@ typedef struct DynamicArrayParams {
  * @return An initialised dynamic array that
  *          should be freed with freeDA()
  */
-dynArray *createDynArray(size_t elementSize, dynArrayParams *params);
+dynArray *createDA(size_t elementSize, dynArrayParams *params);
 
 /**
  * @brief Free a dynamic array instance
@@ -156,8 +158,18 @@ void sortDA(dynArray *pDA, int cmp(void *a, void *b));
 
 /**
  * @brief Reverse the array
- * @param pDA the array pointer to reverse 
+ * @param pDA the array pointer to reverse
  */
 void reverseDA(dynArray *pDA);
+
+/**
+ * @brief Create a shallow copy of the array
+ *
+ * The created copy will need to be freeded with freeeDA()
+ *
+ * @param pDA the array pointer to copy
+ * @return the copied array
+ */
+dynArray *copyDA(dynArray *pDA);
 
 #endif // DYN_ARRAY

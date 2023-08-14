@@ -15,7 +15,7 @@ dynArray *pDAFlt;
 dynArray *pDADbl;
 
 void test_new(void **state) {
-  pDALng = createDynArray(sizeof(long), NULL);
+  pDALng = createDA(sizeof(long), NULL);
 
   assert_int_equal(pDALng->capacity, 10);
   assert_float_equal(pDALng->growth, 1.5, 0.0);
@@ -24,7 +24,7 @@ void test_new(void **state) {
 void test_new_params(void **state) {
   dynArrayParams params =
       (dynArrayParams){.capacity = 20, .growth = 2.5, .size = 5};
-  pDALng = createDynArray(sizeof(long), &params);
+  pDALng = createDA(sizeof(long), &params);
 
   assert_int_equal(pDALng->capacity, 20);
   assert_float_equal(pDALng->growth, 2.5, 0.0);
@@ -34,7 +34,7 @@ void test_new_params(void **state) {
 void test_new_params_limits(void **state) {
   dynArrayParams params =
       (dynArrayParams){.capacity = 20, .growth = 0.5, .size = 25};
-  pDALng = createDynArray(sizeof(long), &params);
+  pDALng = createDA(sizeof(long), &params);
 
   assert_int_equal(pDALng->capacity, 25);
   assert_float_equal(pDALng->growth, 1.5, 0.0);
@@ -42,7 +42,7 @@ void test_new_params_limits(void **state) {
 }
 
 void test_addDA(void **state) {
-  pDALng = createDynArray(sizeof(long), NULL);
+  pDALng = createDA(sizeof(long), NULL);
 
   size_t i, max = 18;
   assert_int_equal(pDALng->dirtyAdd, 0);
@@ -58,7 +58,7 @@ void test_addDA(void **state) {
 }
 
 void test_addAllDA(void **state) {
-  pDALng = createDynArray(sizeof(long), NULL);
+  pDALng = createDA(sizeof(long), NULL);
 
   assert_int_equal(addAllDA(pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10),
                    9);
@@ -85,7 +85,7 @@ void test_addAllDA(void **state) {
 }
 
 void test_getDA(void **state) {
-  pDALng = createDynArray(sizeof(long), NULL);
+  pDALng = createDA(sizeof(long), NULL);
 
   size_t max = pDALng->capacity;
   long i;
@@ -104,7 +104,7 @@ void test_setDA(void **state) {
   size_t i, max = 10;
   long value;
   dynArrayParams params = (dynArrayParams){.size = 10};
-  pDALng = createDynArray(sizeof(long), &params);
+  pDALng = createDA(sizeof(long), &params);
 
   assert_int_equal(pDALng->dirtyAdd, 0);
   assert_int_equal(pDALng->dirtySort, 0);
@@ -126,7 +126,7 @@ void test_setDA(void **state) {
 void test_floatType(void **state) {
   size_t i, max = 10;
   float value;
-  pDAFlt = createDynArray(sizeof(float), NULL);
+  pDAFlt = createDA(sizeof(float), NULL);
 
   for (i = 0; i < max; i++) {
     value = i * 0.5;
@@ -142,7 +142,7 @@ void test_floatType(void **state) {
 void test_doubleType(void **state) {
   size_t i, max = 10;
   double value;
-  pDADbl = createDynArray(sizeof(double), NULL);
+  pDADbl = createDA(sizeof(double), NULL);
 
   for (i = 0; i < max; i++) {
     value = i * 0.5;
@@ -156,7 +156,7 @@ void test_doubleType(void **state) {
 }
 
 void test_quickSort(void **state) {
-  pDALng = createDynArray(sizeof(long), NULL);
+  pDALng = createDA(sizeof(long), NULL);
 
   assert_int_equal(pDALng->dirtyAdd, 0);
   assert_int_equal(pDALng->dirtySort, 0);
@@ -180,7 +180,7 @@ void test_quickSort(void **state) {
 }
 
 void test_memRelease(void **state) {
-  pDALng = createDynArray(sizeof(long), NULL);
+  pDALng = createDA(sizeof(long), NULL);
 
   long value;
   for (int i = 0; i < 100; i++) {
@@ -197,7 +197,7 @@ void test_memRelease(void **state) {
 }
 
 void test_reverse(void **state) {
-  pDALng = createDynArray(sizeof(long), NULL);
+  pDALng = createDA(sizeof(long), NULL);
 
   long arr[] = {0, 0, 1, 2, 6, 6, 7, 8, 9};
   addAllDA(pDALng, arr, 9);
@@ -215,7 +215,7 @@ void test_reverse(void **state) {
     assert_int_equal(value, arr[8 - i]);
   }
 
-  pDAFlt = createDynArray(sizeof(float), NULL);
+  pDAFlt = createDA(sizeof(float), NULL);
   float arrEven[] = {0.0, 0.0, 1.0, 2.0, 6.0, 6.0, 7.0, 8.0};
   addAllDA(pDAFlt, arrEven, 8);
   float fValue;
@@ -233,6 +233,25 @@ void test_reverse(void **state) {
   }
 }
 
+void test_copy(void **state) {
+  pDALng = createDA(sizeof(long), NULL);
+  dynArray *copy;
+  long value;
+  long arr[] = {0, 0, 1, 2, 6, 6, 7, 8, 9};
+
+  addAllDA(pDALng, arr, 9);
+  copy = copyDA(pDALng);
+  for (int i = 0; i < 9; i++) {
+    getDA(pDALng, i, &value);
+    assert_int_equal(value, arr[i]);
+    getDA(copy, i, &value);
+    assert_int_equal(value, arr[i]);
+  }
+  assert_int_equal(copy->size, pDALng->size);
+
+  freeDA(copy);
+}
+
 void test_growing(void **state) {
   size_t i, max = 10, capacity, range;
   clock_t start_t, end_t;
@@ -247,7 +266,7 @@ void test_growing(void **state) {
         max = range;
         dynArrayParams params =
             (dynArrayParams){.capacity = capacity, .growth = growth};
-        pDALng = createDynArray(sizeof(long), &params);
+        pDALng = createDA(sizeof(long), &params);
         start_t = clock();
         for (i = 0; i < max; i++) {
           value = i;
@@ -297,6 +316,7 @@ int main(void) {
       cmocka_unit_test(test_quickSort),
       cmocka_unit_test(test_memRelease),
       cmocka_unit_test(test_reverse),
+      cmocka_unit_test(test_copy),
 #ifdef PERF
       cmocka_unit_test(test_growing),
 #endif // PERF

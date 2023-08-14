@@ -31,40 +31,6 @@ void *_safeReallocarray(void *ptr, const size_t count, const size_t size) {
 /**
  * @private
  */
-dynArray *createDynArray(size_t elementSize, dynArrayParams *params) {
-  dynArray *pDA;
-
-  if (params == NULL) {
-    params = &((dynArrayParams){.size = 0, .growth = 1.5, .capacity = 10});
-  }
-
-  if (params->capacity < 2) {
-    params->capacity = 2;
-  }
-  if (params->growth <= 1.0) {
-    params->growth = 1.5;
-  }
-  if (params->size < 0) {
-    params->size = 0;
-  }
-  if (params->size >= params->capacity) {
-    params->capacity = params->size;
-  }
-  pDA = _safeCalloc(1, sizeof(dynArray));
-  pDA->capacity = params->capacity;
-  pDA->growth = params->growth;
-  pDA->size = params->size;
-  pDA->elementSize = elementSize;
-  pDA->temp = _safeCalloc(1, elementSize);
-  pDA->array = _safeCalloc(pDA->capacity, elementSize);
-  pDA->dirtyAdd = 0;
-  pDA->dirtySort = 0;
-  return pDA;
-}
-
-/**
- * @private
- */
 void _extendCapacity(dynArray *pDA) {
   if (pDA->size >= pDA->capacity) {
     while (pDA->size >= pDA->capacity) {
@@ -128,9 +94,37 @@ void _quickSort(dynArray *pDA, size_t low, size_t high,
   }
 }
 
-/**
- * @private
- */
+dynArray *createDA(size_t elementSize, dynArrayParams *params) {
+  dynArray *pDA;
+
+  if (params == NULL) {
+    params = &((dynArrayParams){.size = 0, .growth = 1.5, .capacity = 10});
+  }
+
+  if (params->capacity < 2) {
+    params->capacity = 2;
+  }
+  if (params->growth <= 1.0) {
+    params->growth = 1.5;
+  }
+  if (params->size < 0) {
+    params->size = 0;
+  }
+  if (params->size >= params->capacity) {
+    params->capacity = params->size;
+  }
+  pDA = _safeCalloc(1, sizeof(dynArray));
+  pDA->capacity = params->capacity;
+  pDA->growth = params->growth;
+  pDA->size = params->size;
+  pDA->elementSize = elementSize;
+  pDA->temp = _safeCalloc(1, elementSize);
+  pDA->array = _safeCalloc(pDA->capacity, elementSize);
+  pDA->dirtyAdd = 0;
+  pDA->dirtySort = 0;
+  return pDA;
+}
+
 void sortDA(dynArray *pDA, int cmp(void *a, void *b)) {
   if (pDA->dirtyAdd || pDA->dirtySort) {
     _quickSort(pDA, 0, pDA->size - 1, cmp);
@@ -194,6 +188,15 @@ void reduceMemDA(dynArray *pDA) {
     pDA->capacity = pDA->size;
     pDA->array = _safeReallocarray(pDA->array, pDA->capacity, pDA->elementSize);
   }
+}
+
+dynArray *copyDA(dynArray *pDA) {
+
+  dynArray *copy =
+      createDA(pDA->elementSize,
+               &(dynArrayParams){.size = pDA->size, .growth = pDA->growth});
+  memcpy(copy->array, pDA->array, pDA->size * pDA->elementSize);
+  return copy;
 }
 
 void freeDA(dynArray *pDA) {
