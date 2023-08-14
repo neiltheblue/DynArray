@@ -182,6 +182,13 @@ void getDA(const dynArray *pDA, const size_t index, void *value) {
   }
 }
 
+void reduceMemDA(dynArray *pDA) {
+  if (pDA && pDA->capacity > pDA->size) {
+    pDA->capacity = pDA->size;
+    pDA->array = _safeReallocarray(pDA->array, pDA->capacity, pDA->elementSize);
+  }
+}
+
 void freeDA(dynArray *pDA) {
   if (pDA) {
     free(pDA->temp);

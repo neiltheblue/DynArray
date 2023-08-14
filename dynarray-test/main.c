@@ -171,11 +171,28 @@ void test_quickSort(void **state) {
   assert_int_equal(pDALng->dirtySort, 0);
   sortDA(pDALng, compareDAlong);
   assert_int_equal(pDALng->dirtyAdd, 0);
-  assert_int_equal(pDALng->dirtySort, 0);  
+  assert_int_equal(pDALng->dirtySort, 0);
   long value;
   for (int i = 0; i < 9; i++) {
     getDA(pDALng, i, &value);
     assert_int_equal(value, sorted[i]);
+  }
+}
+
+void test_memRelease(void **state) {
+  pDALng = createDynArray(sizeof(long), NULL);
+
+  long value;
+  for (int i = 0; i < 100; i++) {
+    value = i;
+    addDA(pDALng, &value);
+  }
+  assert_true(pDALng->capacity > pDALng->size);
+  reduceMemDA(pDALng);
+  assert_int_equal(pDALng->capacity, pDALng->size);
+  for (int i = 0; i < 100; i++) {
+    getDA(pDALng, i, &value);
+    assert_int_equal(value, i);
   }
 }
 
@@ -241,6 +258,7 @@ int main(void) {
       cmocka_unit_test(test_floatType),
       cmocka_unit_test(test_doubleType),
       cmocka_unit_test(test_quickSort),
+      cmocka_unit_test(test_memRelease),
 #ifdef PERF
       cmocka_unit_test(test_growing),
 #endif // PERF

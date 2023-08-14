@@ -8,7 +8,6 @@
  *
  * TODO list:
  *
- * - add free spare memory
  * - array reverse
  * - array copy
  *
@@ -104,6 +103,15 @@ dynArray *createDynArray(size_t elementSize, dynArrayParams *params);
  * @param pDA the dynamic array pointer to free
  */
 void freeDA(dynArray *pDA);
+
+/**
+ * @brief Free extra allocated memory
+ *
+ * The memory is reallocated if capacity > size.
+ *
+ * @param pDA the dynamic array pointer to reduce
+ */
+void reduceMemDA(dynArray *pDA);
 
 /**
  * @brief Set a dynamic array value
