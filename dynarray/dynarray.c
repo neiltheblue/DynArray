@@ -31,13 +31,12 @@ void *_safeReallocarray(void *ptr, const size_t count, const size_t size) {
 /**
  * @private
  */
-dynArray *_createDynArray(dynArrayParams *params, size_t elementSize) {
-  dynArray *pADA;
-  
-  if(params==NULL)
-  {
-	  params=&((dynArrayParams){.size=0,.growth=1.5,.capacity=10});
-   }
+dynArray *createDynArray(size_t elementSize, dynArrayParams *params) {
+  dynArray *pDA;
+
+  if (params == NULL) {
+    params = &((dynArrayParams){.size = 0, .growth = 1.5, .capacity = 10});
+  }
 
   if (params->capacity < 2) {
     params->capacity = 2;
@@ -51,133 +50,142 @@ dynArray *_createDynArray(dynArrayParams *params, size_t elementSize) {
   if (params->size >= params->capacity) {
     params->capacity = params->size;
   }
-  pADA = _safeCalloc(1, sizeof(dynArray));
-  pADA->capacity = params->capacity;
-  pADA->growth = params->growth;
-  pADA->size = params->size;
-  pADA->elementSize = elementSize;
-  pADA->temp = _safeCalloc(1, elementSize);
-  pADA->array = _safeCalloc(pADA->capacity, elementSize);
-  return pADA;
+  pDA = _safeCalloc(1, sizeof(dynArray));
+  pDA->capacity = params->capacity;
+  pDA->growth = params->growth;
+  pDA->size = params->size;
+  pDA->elementSize = elementSize;
+  pDA->temp = _safeCalloc(1, elementSize);
+  pDA->array = _safeCalloc(pDA->capacity, elementSize);
+  pDA->dirtyAdd = 0;
+  pDA->dirtySort = 0;
+  return pDA;
 }
 
 /**
  * @private
  */
-void _extendCapacity(dynArray *pADA) {
-  if (pADA->size >= pADA->capacity) {
-    while (pADA->size >= pADA->capacity) {
-      pADA->capacity *= pADA->growth;
+void _extendCapacity(dynArray *pDA) {
+  if (pDA->size >= pDA->capacity) {
+    while (pDA->size >= pDA->capacity) {
+      pDA->capacity *= pDA->growth;
     }
-    pADA->array =
-        _safeReallocarray(pADA->array, pADA->capacity, pADA->elementSize);
+    pDA->array = _safeReallocarray(pDA->array, pDA->capacity, pDA->elementSize);
   }
 }
 
 /**
  * @private
  */
-void _swap(dynArray *pADA, void *a, void *b) {
+void _swap(dynArray *pDA, void *a, void *b) {
   if (a != b) {
-    memcpy(pADA->temp, a, pADA->elementSize);
-    memcpy(a, b, pADA->elementSize);
-    memcpy(b, pADA->temp, pADA->elementSize);
+    memcpy(pDA->temp, a, pDA->elementSize);
+    memcpy(a, b, pDA->elementSize);
+    memcpy(b, pDA->temp, pDA->elementSize);
   }
 }
 
 /**
  * @private
  */
-void *_toPtr(dynArray *pADA, size_t index) {
-  return pADA->array + (index * pADA->elementSize);
+void *_toPtr(dynArray *pDA, size_t index) {
+  return pDA->array + (index * pDA->elementSize);
 }
 
 /**
  * @private
  */
-size_t _partition(dynArray *pADA, size_t low, size_t high,
+size_t _partition(dynArray *pDA, size_t low, size_t high,
                   int cmp(void *a, void *b)) {
-  void *pivot = _toPtr(pADA, high);
-  void *pLow = _toPtr(pADA, low);
+  void *pivot = _toPtr(pDA, high);
+  void *pLow = _toPtr(pDA, low);
   size_t i = low;
 
-  for (void *j = pLow; j < pivot; j += pADA->elementSize) {
+  for (void *j = pLow; j < pivot; j += pDA->elementSize) {
 
     if (cmp(j, pivot) < 0) {
-      _swap(pADA, _toPtr(pADA, i), j);
+      _swap(pDA, _toPtr(pDA, i), j);
       i++;
     }
   }
-  _swap(pADA, _toPtr(pADA, i), pivot);
+  _swap(pDA, _toPtr(pDA, i), pivot);
   return i;
 }
 
 /**
  * @private
  */
-void _quickSort(dynArray *pADA, size_t low, size_t high,
+void _quickSort(dynArray *pDA, size_t low, size_t high,
                 int cmp(void *a, void *b)) {
   if (low < high) {
 
-    size_t pi = _partition(pADA, low, high, cmp);
+    size_t pi = _partition(pDA, low, high, cmp);
 
     if (pi > 0) {
-      _quickSort(pADA, low, pi - 1, cmp);
+      _quickSort(pDA, low, pi - 1, cmp);
     }
-    _quickSort(pADA, low + 1, high, cmp);
+    _quickSort(pDA, low + 1, high, cmp);
   }
 }
 
 /**
  * @private
  */
-void sortDA(void *pDA, int cmp(void *a, void *b)) {
-  dynArray *pADA = pDA;
-  _quickSort(pADA, 0, pADA->size - 1, cmp);
+void sortDA(dynArray *pDA, int cmp(void *a, void *b)) {
+  if (pDA->dirtyAdd || pDA->dirtySort) {
+    _quickSort(pDA, 0, pDA->size - 1, cmp);
+
+    pDA->dirtyAdd = 0;
+    pDA->dirtySort = 0;
+  }
 }
 
-size_t addAllDA(void *pDA, const void *src, size_t length) {
-  dynArray *pADA = pDA;
-  size_t lastIndex = pADA->size;
-  pADA->size += length;
+size_t addAllDA(dynArray *pDA, const void *src, size_t length) {
+  size_t lastIndex = pDA->size;
+  pDA->size += length;
 
-  _extendCapacity(pADA);
+  _extendCapacity(pDA);
 
-  void *dest = _toPtr(pADA, lastIndex);
-  memcpy(dest, src, pADA->elementSize * length);
+  void *dest = _toPtr(pDA, lastIndex);
+  memcpy(dest, src, pDA->elementSize * length);
 
-  return pADA->size - 1;
+  pDA->dirtyAdd = 1;
+  pDA->dirtySort = 1;
+
+  return pDA->size - 1;
 }
 
-size_t addDA(void *pDA, const void *value) { return addAllDA(pDA, value, 1); }
+size_t addDA(dynArray *pDA, const void *value) {
+  return addAllDA(pDA, value, 1);
+}
 
-size_t setDA(const void *pDA, const size_t index, const void *value) {
-  dynArray *pADA = (dynArray *)pDA;
+size_t setDA(dynArray *pDA, const size_t index, const void *value) {
 
-  if (index >= 0 && index < pADA->size) {
-    memcpy(pADA->array + (index * pADA->elementSize), value, pADA->elementSize);
+  if (index >= 0 && index < pDA->size) {
+    memcpy(pDA->array + (index * pDA->elementSize), value, pDA->elementSize);
   } else {
-    DEBUG_LOG("Index out of range: %ld, array size: %ld", index, pADA->size);
+    DEBUG_LOG("Index out of range: %ld, array size: %ld", index, pDA->size);
     return -1;
   }
+
+  pDA->dirtySort = 1;
 
   return index;
 }
 
-void getDA(const void *pDA, const size_t index, void *value) {
-  dynArray *pADA = (dynArray *)pDA;
+void getDA(const dynArray *pDA, const size_t index, void *value) {
 
-  if (index >= 0 && index < pADA->size) {
-    memcpy(value, pADA->array + (index * pADA->elementSize), pADA->elementSize);
+  if (index >= 0 && index < pDA->size) {
+    memcpy(value, pDA->array + (index * pDA->elementSize), pDA->elementSize);
   } else {
-    DEBUG_LOG("Index out of range: %ld, array size: %ld", index, pADA->size);
+    DEBUG_LOG("Index out of range: %ld, array size: %ld", index, pDA->size);
   }
 }
 
-void freeDA(void *pDA) {
+void freeDA(dynArray *pDA) {
   if (pDA) {
-    free(((dynArray *)pDA)->temp);
-    free(((dynArray *)pDA)->array);
+    free(pDA->temp);
+    free(pDA->array);
     free(pDA);
   }
 }

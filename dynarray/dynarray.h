@@ -8,8 +8,6 @@
  *
  * TODO list:
  *
- * - dirty flag for add
- * - dirty flag for set
  * - add free spare memory
  * - array reverse
  * - array copy
@@ -47,77 +45,38 @@ typedef struct DynamicArray {
   float growth;
   void *array;
   void *temp;
+  unsigned int dirtyAdd : 1;
+  unsigned int dirtySort : 1;
 } dynArray;
 
 /**
- * @brief Dynamic array type definition
+ * @brief Basic type comparator function declaration macro
  *
- * This definition should be added to an applications source file, which will
- * generate the method and dynArrayure definitions required to support
- * a new typed dynamic array.
+ * These helper functions are intended for use with the sortDA() function.
  *
- * For example:
+ * Each generated function name will be of the form compareDA<TYPE>(void *a,
+ * void *b).
  *
- * DEFINE_DYNARRAY_TYPE(long, dynArrayLong, dynArray)
- *
- * This will generate a new dynamic array condynArrayor method called
- * 'dynArray' that will use the 'dynArrayLong' dynamic array data dynArrayure,
- * to store an array of 'long' values:
- *
- * dynArrayLong *pDA = dynArray((dynArrayParams){.size = 10});
- *
- * This macro will also generate a typed value function implementations:
- *
- * size_t setDA<NAME>(const <dynArray> *pDA, const size_t index, <TYPE> value)
- *
- * size_t addDA<NAME>(<dynArray> *pDA, <TYPE> value)
- *
- * void getDA<NAME>(const <dynArray> *pDA, const size_t index, <TYPE> *value)
- *
- * Where NAME is the name of the new array method and TYPE is the element type.
- *
- * int <NAME>Compare(TYPE *a, TYPE *b)
- *
- * This is a default compare function. Returning <0, 0 or >0 id a is less than,
- * equal to or greater than b.
- *
- * @param TYPE the data type that will be stored in the dynamic array
- * @param NAME the name of the new method that will create a typed dynamic array
+ * @param TYPE the data type to be compared
+ * @return -1, 0 or 1 if a is less than, equal to or greater than b
  *
  */
-#define DEFINE_DYNARRAY_TYPE(TYPE, NAME)                                       \
-                                                                               \
-  size_t setDA##NAME(const dynArray *pDA, const size_t index, TYPE value) {    \
-    return setDA(pDA, index, &value);                                          \
-  }                                                                            \
-                                                                               \
-  void getDA##NAME(const dynArray *pDA, const size_t index, TYPE *value) {     \
-    getDA(pDA, index, value);                                                  \
-  }                                                                            \
-                                                                               \
-  size_t addDA##NAME(dynArray *pDA, TYPE value) { return addDA(pDA, &value); } \
-                                                                               \
-  size_t addAllDA##NAME(dynArray *pDA, const TYPE src[], size_t length) {       \
-    return addAllDA(pDA, src, length);                                         \
-  }                                                                            \
-                                                                               \
-  void sortDA##NAME(dynArray *pDA, int cmp(void *a, void *b)) {                \
-    sortDA(pDA, cmp);                                                          \
-  }                                                                            \
-                                                                               \
-  dynArray *NAME(dynArrayParams *params) {                                     \
-    return _createDynArray(params, sizeof(TYPE));                              \
-  }                                                                            \
-                                                                               \
-  int NAME##Compare(void *a, void *b) {                                        \
+#define DECLARE_COMPARE_TYPE(TYPE) int compareDA##TYPE(void *a, void *b);
+
+/**
+ * @brief Basic type comparator function definition macro
+ *
+ * @param TYPE the data type to be compared
+ * @return -1, 0 or 1 if a is less than, equal to or greater than b
+ *
+ */
+#define DEFINE_COMPARE_TYPE(TYPE)                                              \
+  int compareDA##TYPE(void *a, void *b) {                                      \
     return (*(TYPE *)a < *(TYPE *)b) ? -1 : (*(TYPE *)a > *(TYPE *)b) ? 1 : 0; \
   }
 
 /**
- * @brief Parameter dynArrayure for creating a new dynamic array
- *
- * This dynArray is for use with the helper
- * macro DEFINE_DYNARRAY_TYPE().
+ * @brief Dynamic array creation parameters
  *
  * If the size is greater than 0 the initial capacity will be extended.
  *
@@ -133,21 +92,18 @@ typedef struct DynamicArrayParams {
 /**
  * @brief Create a new dynamic array.
  *
- * The helper macro DEFINE_DYNARRAY_TYPE uses this call to create a new
- * dynamic array function.
- *
- * @param params a pointer to the dynamic array parameters or NULL for default
  * @param elementSize the element size to reserve
+ * @param params a pointer to the dynamic array parameters or NULL for default
  * @return An initialised dynamic array that
  *          should be freed with freeDA()
  */
-dynArray *_createDynArray(dynArrayParams *params, size_t elementSize);
+dynArray *createDynArray(size_t elementSize, dynArrayParams *params);
 
 /**
  * @brief Free a dynamic array instance
  * @param pDA the dynamic array pointer to free
  */
-void freeDA(void *pDA);
+void freeDA(dynArray *pDA);
 
 /**
  * @brief Set a dynamic array value
@@ -156,7 +112,7 @@ void freeDA(void *pDA);
  * @param value the value to apply
  * @return the updated index
  */
-size_t setDA(const void *pDA, const size_t index, const void *value);
+size_t setDA(dynArray *pDA, const size_t index, const void *value);
 
 /**
  * @brief Add a dynamic array value
@@ -164,7 +120,7 @@ size_t setDA(const void *pDA, const size_t index, const void *value);
  * @param value the value to apply
  * @return the updated index
  */
-size_t addDA(void *pDA, const void *value);
+size_t addDA(dynArray *pDA, const void *value);
 
 /**
  * @brief Add a dynamic array value
@@ -173,7 +129,7 @@ size_t addDA(void *pDA, const void *value);
  * @param length the number of elements to copy
  * @return the last updated index
  */
-size_t addAllDA(void *pDA, const void *src, size_t length);
+size_t addAllDA(dynArray *pDA, const void *src, size_t length);
 
 /**
  * @brief Get a dynamic array value
@@ -181,13 +137,13 @@ size_t addAllDA(void *pDA, const void *src, size_t length);
  * @param index the index to read
  * @param value the value pointer to set
  */
-void getDA(const void *pDA, const size_t index, void *value);
+void getDA(const dynArray *pDA, const size_t index, void *value);
 
 /**
  * @brief Sort the array
  * @param pDA the array pointer to update
  * @param cmp the comparative function to apply
  */
-void sortDA(void *pDA, int cmp(void *a, void *b));
+void sortDA(dynArray *pDA, int cmp(void *a, void *b));
 
 #endif // DYN_ARRAY

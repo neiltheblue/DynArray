@@ -1,6 +1,5 @@
 #include "main.h"
 
-#include "dynarray.h"
 #include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
@@ -8,16 +7,15 @@
 #include <time.h>
 #include <zcmocka.h>
 
-DEFINE_DYNARRAY_TYPE(long, dynArrayLng)
-DEFINE_DYNARRAY_TYPE(float, dynArrayFlt)
-DEFINE_DYNARRAY_TYPE(double, dynArrayDbl)
+DEFINE_COMPARE_TYPE(long)
+DEFINE_COMPARE_TYPE(float)
 
 dynArray *pDALng;
 dynArray *pDAFlt;
 dynArray *pDADbl;
 
 void test_new(void **state) {
-  pDALng = dynArrayLng(NULL);
+  pDALng = createDynArray(sizeof(long), NULL);
 
   assert_int_equal(pDALng->capacity, 10);
   assert_float_equal(pDALng->growth, 1.5, 0.0);
@@ -26,7 +24,7 @@ void test_new(void **state) {
 void test_new_params(void **state) {
   dynArrayParams params =
       (dynArrayParams){.capacity = 20, .growth = 2.5, .size = 5};
-  pDALng = dynArrayLng(&params);
+  pDALng = createDynArray(sizeof(long), &params);
 
   assert_int_equal(pDALng->capacity, 20);
   assert_float_equal(pDALng->growth, 2.5, 0.0);
@@ -36,7 +34,7 @@ void test_new_params(void **state) {
 void test_new_params_limits(void **state) {
   dynArrayParams params =
       (dynArrayParams){.capacity = 20, .growth = 0.5, .size = 25};
-  pDALng = dynArrayLng(&params);
+  pDALng = createDynArray(sizeof(long), &params);
 
   assert_int_equal(pDALng->capacity, 25);
   assert_float_equal(pDALng->growth, 1.5, 0.0);
@@ -44,58 +42,60 @@ void test_new_params_limits(void **state) {
 }
 
 void test_addDA(void **state) {
-  pDALng = dynArrayLng(NULL);
+  pDALng = createDynArray(sizeof(long), NULL);
 
   size_t i, max = 18;
+  assert_int_equal(pDALng->dirtyAdd, 0);
+  assert_int_equal(pDALng->dirtySort, 0);
   for (i = 0; i < max; i++) {
-    assert_int_equal(addDAdynArrayLng(pDALng, i), i);
+    assert_int_equal(addDA(pDALng, &i), i);
   }
+  assert_int_equal(pDALng->dirtyAdd, 1);
+  assert_int_equal(pDALng->dirtySort, 1);
 
   assert_int_equal(pDALng->capacity, 22);
   assert_int_equal(pDALng->size, max);
 }
 
 void test_addAllDA(void **state) {
-  pDALng = dynArrayLng(NULL);
+  pDALng = createDynArray(sizeof(long), NULL);
 
-  assert_int_equal(
-      addAllDAdynArrayLng(pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10),
-      9);
+  assert_int_equal(addAllDA(pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10),
+                   9);
 
   int i;
   long value;
   for (i = 0; i < 10; i++) {
-    getDAdynArrayLng(pDALng, i, &value);
+    getDA(pDALng, i, &value);
     assert_int_equal(value, i);
   }
 
   assert_int_equal(
-      addAllDAdynArrayLng(pDALng,
-                          (long[]){10, 11, 12, 13, 14, 15, 16, 17, 18, 19}, 10),
+      addAllDA(pDALng, (long[]){10, 11, 12, 13, 14, 15, 16, 17, 18, 19}, 10),
       19);
   for (i = 0; i < 20; i++) {
-    getDAdynArrayLng(pDALng, i, &value);
+    getDA(pDALng, i, &value);
     assert_int_equal(value, i);
   }
 
   for (i = 20; i < 30; i++) {
-    assert_int_equal(addDAdynArrayLng(pDALng, i), i);
+    assert_int_equal(addDA(pDALng, &i), i);
   }
   assert_int_equal(pDALng->size, 30);
 }
 
 void test_getDA(void **state) {
-  pDALng = dynArrayLng(NULL);
+  pDALng = createDynArray(sizeof(long), NULL);
 
   size_t max = pDALng->capacity;
   long i;
   for (i = 0; i < max; i++) {
-    addDAdynArrayLng(pDALng, i);
+    addDA(pDALng, &i);
   }
 
   long value = 0;
   for (i = 0; i < max; i++) {
-    getDAdynArrayLng(pDALng, i, &value);
+    getDA(pDALng, i, &value);
     assert_int_equal(value, i);
   }
 }
@@ -104,17 +104,21 @@ void test_setDA(void **state) {
   size_t i, max = 10;
   long value;
   dynArrayParams params = (dynArrayParams){.size = 10};
-  pDALng = dynArrayLng(&params);
+  pDALng = createDynArray(sizeof(long), &params);
 
+  assert_int_equal(pDALng->dirtyAdd, 0);
+  assert_int_equal(pDALng->dirtySort, 0);
   for (i = 0; i < max; i++) {
     getDA(pDALng, i, &value);
     assert_int_equal(value, 0);
     value = i * 10;
-    assert_int_equal(setDAdynArrayLng(pDALng, i, value), i);
+    assert_int_equal(setDA(pDALng, i, &value), i);
   }
+  assert_int_equal(pDALng->dirtyAdd, 0);
+  assert_int_equal(pDALng->dirtySort, 1);
 
   for (i = 0; i < max; i++) {
-    getDAdynArrayLng(pDALng, i, &value);
+    getDA(pDALng, i, &value);
     assert_int_equal(value, i * 10);
   }
 }
@@ -122,15 +126,15 @@ void test_setDA(void **state) {
 void test_floatType(void **state) {
   size_t i, max = 10;
   float value;
-  pDAFlt = dynArrayFlt(NULL);
+  pDAFlt = createDynArray(sizeof(float), NULL);
 
   for (i = 0; i < max; i++) {
     value = i * 0.5;
-    addDAdynArrayFlt(pDAFlt, value);
+    addDA(pDAFlt, &value);
   }
 
   for (i = 0; i < max; i++) {
-    getDAdynArrayFlt(pDAFlt, i, &value);
+    getDA(pDAFlt, i, &value);
     assert_float_equal(value, i * 0.5, 0.01);
   }
 }
@@ -138,30 +142,39 @@ void test_floatType(void **state) {
 void test_doubleType(void **state) {
   size_t i, max = 10;
   double value;
-  pDADbl = dynArrayDbl(NULL);
+  pDADbl = createDynArray(sizeof(double), NULL);
 
   for (i = 0; i < max; i++) {
     value = i * 0.5;
-    addDAdynArrayDbl(pDADbl, value);
+    addDA(pDADbl, &value);
   }
 
   for (i = 0; i < max; i++) {
-    getDAdynArrayDbl(pDADbl, i, &value);
+    getDA(pDADbl, i, &value);
     assert_float_equal(value, i * 0.5, 0.01);
   }
 }
 
 void test_quickSort(void **state) {
-  pDALng = dynArrayLng(NULL);
+  pDALng = createDynArray(sizeof(long), NULL);
 
+  assert_int_equal(pDALng->dirtyAdd, 0);
+  assert_int_equal(pDALng->dirtySort, 0);
   long arr[] = {8, 7, 6, 1, 0, 9, 2, 6, 0};
   long sorted[] = {0, 0, 1, 2, 6, 6, 7, 8, 9};
-  addAllDAdynArrayLng(pDALng, arr, 9);
+  addAllDA(pDALng, arr, 9);
+  assert_int_equal(pDALng->dirtyAdd, 1);
+  assert_int_equal(pDALng->dirtySort, 1);
 
-  sortDAdynArrayLng(pDALng, dynArrayLngCompare);
+  sortDA(pDALng, compareDAlong);
+  assert_int_equal(pDALng->dirtyAdd, 0);
+  assert_int_equal(pDALng->dirtySort, 0);
+  sortDA(pDALng, compareDAlong);
+  assert_int_equal(pDALng->dirtyAdd, 0);
+  assert_int_equal(pDALng->dirtySort, 0);  
   long value;
   for (int i = 0; i < 9; i++) {
-    getDAdynArrayLng(pDALng, i, &value);
+    getDA(pDALng, i, &value);
     assert_int_equal(value, sorted[i]);
   }
 }
@@ -171,6 +184,7 @@ void test_growing(void **state) {
   clock_t start_t, end_t;
   double total_t;
   float growth;
+  long value;
 
   for (growth = 1.5; growth <= 2.0; growth += 0.5) {
     for (capacity = 100; capacity <= 100000; capacity *= 100) {
@@ -179,10 +193,11 @@ void test_growing(void **state) {
         max = range;
         dynArrayParams params =
             (dynArrayParams){.capacity = capacity, .growth = growth};
-        pDALng = dynArrayLng(&params);
+        pDALng = createDynArray(sizeof(long), &params);
         start_t = clock();
         for (i = 0; i < max; i++) {
-          addDAdynArrayLng(pDALng, (long)i);
+          value = i;
+          addDA(pDALng, &value);
         }
         end_t = clock();
         total_t = (double)(end_t - start_t) / CLOCKS_PER_SEC;
