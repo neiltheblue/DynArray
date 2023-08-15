@@ -8,7 +8,7 @@
  *
  * TODO list:
  *
- * - add DA (will also deep copy if applied to empty array)
+ *
  *
  */
 
@@ -211,5 +211,17 @@ bool searchDA(dynArray *pDA, int cmp(void *a, void *b), void *value,
  * @return the new sub array pointer or NULL if the new range is not valid
  */
 dynArray *subDA(dynArray *pDA, size_t min, size_t max);
+
+/**
+ * @brief Append a source dynamic array
+ *
+ * Will not append to a sub array, and the source array must have the same
+ * element size.
+ *
+ * @param pDA the array pointer to copy to
+ * @param pSrc the source array pointer
+ * @return 'true' if the array could be copied
+ */
+bool appendDA(dynArray *pDA, dynArray *pSrc);
 
 #endif // DYN_ARRAY

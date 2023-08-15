@@ -256,6 +256,13 @@ dynArray *subDA(dynArray *pDA, size_t min, size_t max) {
   return sub;
 }
 
+bool appendDA(dynArray *pDA, dynArray *pSrc) {
+  bool appended = false;
+  if (pDA->elementSize == pSrc->elementSize) {
+    appended = addAllDA(pDA, pSrc->array, pSrc->size);
+  }
+  return appended;
+}
 
 void freeDA(dynArray *pDA) {
   if (pDA) {

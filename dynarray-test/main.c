@@ -167,7 +167,7 @@ void test_quickSort(void **state) {
   addAllDA(pDALng, arr, 9);
 
   sortDA(pDALng, compareDAlong);
-  
+
   long value;
   for (int i = 0; i < 9; i++) {
     getDA(pDALng, i, &value);
@@ -330,6 +330,33 @@ void test_binSearch(void **state) {
   assert_int_equal(searchDA(pDALng, compareDAlong, &value, &index), false);
 }
 
+void test_appendDA(void **state) {
+  pDALng = createDA(sizeof(long), NULL);
+  dynArray *other = createDA(sizeof(long), NULL);
+  long v1, v2;
+
+  addAllDA(pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10);
+
+  appendDA(other, pDALng);
+  assert_int_equal(other->size, pDALng->size);
+  for (int i = 0; i < pDALng->size; i++) {
+    getDA(other, i, &v1);
+    getDA(pDALng, i, &v2);
+    assert_int_equal(v1, v2);
+  }
+
+  appendDA(other, pDALng);
+  assert_int_equal(other->size, pDALng->size * 2);
+  for (int i = 0; i < pDALng->size; i++) {
+    getDA(other, i, &v1);
+    getDA(pDALng, i, &v2);
+    assert_int_equal(v1, v2);
+
+    getDA(other, i + pDALng->size, &v1);
+    assert_int_equal(v1, v2);
+  }
+}
+
 void test_growing(void **state) {
   size_t i, max = 10, capacity, range;
   clock_t start_t, end_t;
@@ -397,6 +424,7 @@ int main(void) {
       cmocka_unit_test(test_copy),
       cmocka_unit_test(test_binSearch),
       cmocka_unit_test(test_subDA),
+      cmocka_unit_test(test_appendDA),
 #ifdef PERF
       cmocka_unit_test(test_growing),
 #endif // PERF
