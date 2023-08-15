@@ -48,20 +48,23 @@ void test_addDA(void **state) {
   assert_int_equal(pDALng->dirtyAdd, false);
   assert_int_equal(pDALng->dirtySort, false);
   for (i = 0; i < max; i++) {
-    assert_int_equal(addDA(pDALng, &i), i);
+    assert_int_equal(addDA(pDALng, &i), true);
   }
   assert_int_equal(pDALng->dirtyAdd, true);
   assert_int_equal(pDALng->dirtySort, true);
 
   assert_int_equal(pDALng->capacity, 22);
   assert_int_equal(pDALng->size, max);
+
+  pDALng->sub = true;
+  assert_int_equal(addDA(pDALng, &i), false);
 }
 
 void test_addAllDA(void **state) {
   pDALng = createDA(sizeof(long), NULL);
 
   assert_int_equal(addAllDA(pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10),
-                   9);
+                   true);
 
   int i;
   long value;
@@ -72,16 +75,21 @@ void test_addAllDA(void **state) {
 
   assert_int_equal(
       addAllDA(pDALng, (long[]){10, 11, 12, 13, 14, 15, 16, 17, 18, 19}, 10),
-      19);
+      true);
   for (i = 0; i < 20; i++) {
     getDA(pDALng, i, &value);
     assert_int_equal(value, i);
   }
 
   for (i = 20; i < 30; i++) {
-    assert_int_equal(addDA(pDALng, &i), i);
+    assert_int_equal(addDA(pDALng, &i), true);
   }
   assert_int_equal(pDALng->size, 30);
+
+  pDALng->sub = true;
+  assert_int_equal(
+      addAllDA(pDALng, (long[]){10, 11, 12, 13, 14, 15, 16, 17, 18, 19}, 10),
+      false);
 }
 
 void test_getDA(void **state) {
@@ -98,7 +106,7 @@ void test_getDA(void **state) {
     assert_int_equal(getDA(pDALng, i, &value), true);
     assert_int_equal(value, i);
   }
-  
+
   assert_int_equal(getDA(pDALng, 100, &value), false);
 }
 
@@ -118,7 +126,7 @@ void test_setDA(void **state) {
   }
   assert_int_equal(pDALng->dirtyAdd, false);
   assert_int_equal(pDALng->dirtySort, true);
-  
+
   assert_int_equal(setDA(pDALng, 100, &value), false);
 
   for (i = 0; i < max; i++) {
@@ -235,6 +243,31 @@ void test_reverse(void **state) {
     getDA(pDAFlt, i, &fValue);
     assert_float_equal(fValue, arrEven[7 - i], 0.0);
   }
+}
+
+void test_subDA(void **state) {
+  pDALng = createDA(sizeof(long), NULL);
+  long value = 666;
+
+  addAllDA(pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10);
+
+  assert_int_equal(subDA(pDALng, 1, 0), NULL);
+  assert_int_equal(subDA(pDALng, 3, 100), NULL);
+
+  dynArray *sub = subDA(pDALng, 2, 7);
+  assert_int_equal(sub->sub, true);
+  assert_int_equal(addDA(sub, &value), false);
+
+  reverseDA(sub);
+  setDA(sub, 5, &value);
+
+  getDA(pDALng, 7, &value);
+  assert_int_equal(value, 666);
+
+  getDA(pDALng, 2, &value);
+  assert_int_equal(value, 7);
+
+  freeDA(sub);
 }
 
 void test_copy(void **state) {
@@ -378,6 +411,7 @@ int main(void) {
       cmocka_unit_test(test_reverse),
       cmocka_unit_test(test_copy),
       cmocka_unit_test(test_binSearch),
+      cmocka_unit_test(test_subDA),
 #ifdef PERF
       cmocka_unit_test(test_growing),
 #endif // PERF

@@ -8,7 +8,6 @@
  *
  * TODO list:
  *
- * - subarray
  * - add DA (will also deep copy if applied to empty array)
  *
  */
@@ -47,6 +46,7 @@ typedef struct DynamicArray {
   void *temp;         ///< the temp element store
   bool dirtyAdd : 1;  ///< the dirty added data flag
   bool dirtySort : 1; ///< the dirty sorted data flag
+  bool sub : 1;       ///< the sub array flag
 } dynArray;
 
 /**
@@ -125,20 +125,26 @@ bool setDA(dynArray *pDA, const size_t index, const void *value);
 
 /**
  * @brief Add a dynamic array value
+ * 
+ * This will only add values if the array is not a sub-array.
+ * 
  * @param pDA the array pointer to update
  * @param value the value to apply
- * @return the updated index
+ * @return 'true' if the values was added
  */
-size_t addDA(dynArray *pDA, const void *value);
+bool addDA(dynArray *pDA, const void *value);
 
 /**
  * @brief Add a dynamic array value
+ * 
+ * This will only add values if the array is not a sub-array.
+ * 
  * @param pDA the array pointer to update
  * @param src the source value array
  * @param length the number of elements to copy
- * @return the last updated index
+ * @return 'true' if the values were added
  */
-size_t addAllDA(dynArray *pDA, const void *src, size_t length);
+bool addAllDA(dynArray *pDA, const void *src, size_t length);
 
 /**
  * @brief Get a dynamic array value
@@ -189,5 +195,19 @@ dynArray *copyDA(dynArray *pDA);
  */
 bool searchDA(dynArray *pDA, int cmp(void *a, void *b), void *value,
               size_t *index);
+
+
+/**
+ * @brief Create a sub array based on the parent array
+ * 
+ * The sub array will have direct access to the underlying array and can make chagnes to it. The sub array can not be extended with add methods.
+ * The sub array should be freed with freeDA(), but this will not free the underlying array.
+ * 
+ * @param pDA the underlying array to access
+ * @param min the min array index
+ * @param max the max array index
+ * @return the new sub array pointer or NULL if the new range is not valid
+ */
+dynArray *subDA(dynArray *pDA, size_t min, size_t max);
 
 #endif // DYN_ARRAY

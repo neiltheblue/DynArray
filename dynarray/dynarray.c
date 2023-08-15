@@ -31,13 +31,25 @@ void *_safeReallocarray(void *ptr, const size_t count, const size_t size) {
 /**
  * @private
  */
-void _extendCapacity(dynArray *pDA) {
+bool _extendCapacity(dynArray *pDA) {
+  bool extended = false;
   if (pDA->size >= pDA->capacity) {
-    while (pDA->size >= pDA->capacity) {
+
+    if (pDA->capacity < 1) {
+      pDA->capacity = pDA->size;
+    }
+
+    if (pDA->growth <= 1.0) {
+      pDA->capacity = pDA->size;
+    }
+
+    while (pDA->size > pDA->capacity) {
       pDA->capacity *= pDA->growth;
     }
     pDA->array = _safeReallocarray(pDA->array, pDA->capacity, pDA->elementSize);
+    extended = true;
   }
+  return extended;
 }
 
 /**
@@ -124,7 +136,7 @@ bool _binarySearch(dynArray *pDA, int cmp(void *a, void *b), void *value,
 }
 
 bool searchDA(dynArray *pDA, int cmp(void *a, void *b), void *value,
-                  size_t *index) {
+              size_t *index) {
   bool found = false;
   if (pDA->size > 0) {
     sortDA(pDA, cmp);
@@ -140,14 +152,8 @@ dynArray *createDA(size_t elementSize, dynArrayParams *params) {
     params = &((dynArrayParams){.size = 0, .growth = 1.5, .capacity = 10});
   }
 
-  if (params->capacity < 2) {
-    params->capacity = 2;
-  }
   if (params->growth <= 1.0) {
     params->growth = 1.5;
-  }
-  if (params->size < 0) {
-    params->size = 0;
   }
   if (params->size >= params->capacity) {
     params->capacity = params->size;
@@ -159,8 +165,9 @@ dynArray *createDA(size_t elementSize, dynArrayParams *params) {
   pDA->elementSize = elementSize;
   pDA->temp = _safeCalloc(1, elementSize);
   pDA->array = _safeCalloc(pDA->capacity, elementSize);
-  pDA->dirtyAdd = 0;
-  pDA->dirtySort = 0;
+  pDA->dirtyAdd = false;
+  pDA->dirtySort = false;
+  pDA->sub = false;
   return pDA;
 }
 
@@ -177,28 +184,31 @@ bool sortDA(dynArray *pDA, int cmp(void *a, void *b)) {
   return sorted;
 }
 
-size_t addAllDA(dynArray *pDA, const void *src, size_t length) {
-  size_t lastIndex = pDA->size;
-  pDA->size += length;
+bool addAllDA(dynArray *pDA, const void *src, size_t length) {
+  bool added = false;
+  if (!pDA->sub) {
+    size_t lastIndex = pDA->size;
+    pDA->size += length;
 
-  _extendCapacity(pDA);
+    _extendCapacity(pDA);
 
-  void *dest = _toPtr(pDA, lastIndex);
-  memcpy(dest, src, pDA->elementSize * length);
+    void *dest = _toPtr(pDA, lastIndex);
+    memcpy(dest, src, pDA->elementSize * length);
 
-  pDA->dirtyAdd = true;
-  pDA->dirtySort = true;
+    pDA->dirtyAdd = true;
+    pDA->dirtySort = true;
 
-  return pDA->size - 1;
+    added = true;
+  }
+
+  return added;
 }
 
-size_t addDA(dynArray *pDA, const void *value) {
-  return addAllDA(pDA, value, 1);
-}
+bool addDA(dynArray *pDA, const void *value) { return addAllDA(pDA, value, 1); }
 
 bool setDA(dynArray *pDA, const size_t index, const void *value) {
   bool ok = true;
-  
+
   if (index >= 0 && index < pDA->size) {
     memcpy(pDA->array + (index * pDA->elementSize), value, pDA->elementSize);
     pDA->dirtySort = true;
@@ -244,10 +254,31 @@ dynArray *copyDA(dynArray *pDA) {
   return copy;
 }
 
+dynArray *subDA(dynArray *pDA, size_t min, size_t max) {
+  dynArray *sub = NULL;
+  if (max > min && max < pDA->size) {
+    size_t subSize = max - min + 1;
+    sub = _safeCalloc(1, sizeof(dynArray));
+    sub->capacity = 0;
+    sub->growth = 1.0;
+    sub->size = subSize;
+    sub->elementSize = pDA->elementSize;
+    sub->temp = _safeCalloc(1, sub->elementSize);
+    sub->array = _toPtr(pDA, min);
+    sub->dirtyAdd = false;
+    sub->dirtySort = false;
+    sub->sub = true;
+  }
+
+  return sub;
+}
+
 void freeDA(dynArray *pDA) {
   if (pDA) {
     free(pDA->temp);
-    free(pDA->array);
+    if (!pDA->sub) {
+      free(pDA->array);
+    }
     free(pDA);
   }
 }
