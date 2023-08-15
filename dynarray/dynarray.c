@@ -165,28 +165,17 @@ dynArray *createDA(size_t elementSize, dynArrayParams *params) {
   pDA->elementSize = elementSize;
   pDA->temp = _safeCalloc(1, elementSize);
   pDA->array = _safeCalloc(pDA->capacity, elementSize);
-  pDA->dirtyAdd = false;
-  pDA->dirtySort = false;
-  pDA->sub = false;
+  pDA->parent = NULL;
   return pDA;
 }
 
-bool sortDA(dynArray *pDA, int cmp(void *a, void *b)) {
-  bool sorted = false;
-  if (pDA->dirtyAdd || pDA->dirtySort) {
-    sorted = true;
-    _quickSort(pDA, 0, pDA->size - 1, cmp);
-
-    pDA->dirtyAdd = false;
-    pDA->dirtySort = false;
-  }
-
-  return sorted;
+void sortDA(dynArray *pDA, int cmp(void *a, void *b)) {
+  _quickSort(pDA, 0, pDA->size - 1, cmp);
 }
 
 bool addAllDA(dynArray *pDA, const void *src, size_t length) {
   bool added = false;
-  if (!pDA->sub) {
+  if (pDA->parent == NULL) {
     size_t lastIndex = pDA->size;
     pDA->size += length;
 
@@ -194,9 +183,6 @@ bool addAllDA(dynArray *pDA, const void *src, size_t length) {
 
     void *dest = _toPtr(pDA, lastIndex);
     memcpy(dest, src, pDA->elementSize * length);
-
-    pDA->dirtyAdd = true;
-    pDA->dirtySort = true;
 
     added = true;
   }
@@ -211,7 +197,6 @@ bool setDA(dynArray *pDA, const size_t index, const void *value) {
 
   if (index >= 0 && index < pDA->size) {
     memcpy(pDA->array + (index * pDA->elementSize), value, pDA->elementSize);
-    pDA->dirtySort = true;
   } else {
     DEBUG_LOG("Index out of range: %ld, array size: %ld\n", index, pDA->size);
     ok = false;
@@ -260,23 +245,22 @@ dynArray *subDA(dynArray *pDA, size_t min, size_t max) {
     size_t subSize = max - min + 1;
     sub = _safeCalloc(1, sizeof(dynArray));
     sub->capacity = 0;
-    sub->growth = 1.0;
+    sub->growth = 0;
     sub->size = subSize;
     sub->elementSize = pDA->elementSize;
     sub->temp = _safeCalloc(1, sub->elementSize);
     sub->array = _toPtr(pDA, min);
-    sub->dirtyAdd = false;
-    sub->dirtySort = false;
-    sub->sub = true;
+    sub->parent = pDA;
   }
 
   return sub;
 }
 
+
 void freeDA(dynArray *pDA) {
   if (pDA) {
     free(pDA->temp);
-    if (!pDA->sub) {
+    if (pDA->parent == NULL) {
       free(pDA->array);
     }
     free(pDA);

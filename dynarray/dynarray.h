@@ -38,15 +38,13 @@
  * @brief Dynamic array dynArray declaration
  */
 typedef struct DynamicArray {
-  size_t elementSize; ///< the element size
-  size_t size;        ///< the array size
-  size_t capacity;    ///< the array capacity
-  float growth;       ///< the array growth rate
-  void *array;        ///< the array
-  void *temp;         ///< the temp element store
-  bool dirtyAdd : 1;  ///< the dirty added data flag
-  bool dirtySort : 1; ///< the dirty sorted data flag
-  bool sub : 1;       ///< the sub array flag
+  size_t elementSize;          ///< the element size
+  size_t size;                 ///< the array size
+  size_t capacity;             ///< the array capacity
+  float growth;                ///< the array growth rate
+  void *array;                 ///< the array
+  void *temp;                  ///< the temp element store
+  struct DynamicArray *parent; ///< the parent array
 } dynArray;
 
 /**
@@ -100,6 +98,13 @@ typedef struct DynamicArrayParams {
 dynArray *createDA(size_t elementSize, dynArrayParams *params);
 
 /**
+ * @brief Check if an array is dirty
+ * @param pDA the array to check
+ * @return 'true' if the array may be unsorted
+ */
+bool isDirtyDA(dynArray *pDA);
+
+/**
  * @brief Free a dynamic array instance
  * @param pDA the dynamic array pointer to free
  */
@@ -125,9 +130,9 @@ bool setDA(dynArray *pDA, const size_t index, const void *value);
 
 /**
  * @brief Add a dynamic array value
- * 
+ *
  * This will only add values if the array is not a sub-array.
- * 
+ *
  * @param pDA the array pointer to update
  * @param value the value to apply
  * @return 'true' if the values was added
@@ -136,9 +141,9 @@ bool addDA(dynArray *pDA, const void *value);
 
 /**
  * @brief Add a dynamic array value
- * 
+ *
  * This will only add values if the array is not a sub-array.
- * 
+ *
  * @param pDA the array pointer to update
  * @param src the source value array
  * @param length the number of elements to copy
@@ -157,14 +162,10 @@ bool getDA(const dynArray *pDA, const size_t index, void *value);
 
 /**
  * @brief Sort the array
- *
- * The array will only be sorted if it is dirty
- *
  * @param pDA the array pointer to update
  * @param cmp the comparative function to apply
- * @return 'true' if a sort was performed
  */
-bool sortDA(dynArray *pDA, int cmp(void *a, void *b));
+void sortDA(dynArray *pDA, int cmp(void *a, void *b));
 
 /**
  * @brief Reverse the array
@@ -196,13 +197,14 @@ dynArray *copyDA(dynArray *pDA);
 bool searchDA(dynArray *pDA, int cmp(void *a, void *b), void *value,
               size_t *index);
 
-
 /**
  * @brief Create a sub array based on the parent array
- * 
- * The sub array will have direct access to the underlying array and can make chagnes to it. The sub array can not be extended with add methods.
- * The sub array should be freed with freeDA(), but this will not free the underlying array.
- * 
+ *
+ * The sub array will have direct access to the underlying array and can make
+ * chagnes to it. The sub array can not be extended with add methods. The sub
+ * array should be freed with freeDA(), but this will not free the underlying
+ * array.
+ *
  * @param pDA the underlying array to access
  * @param min the min array index
  * @param max the max array index
