@@ -1,5 +1,8 @@
-#ifndef DYN_ARRAY
-#define DYN_ARRAY
+#ifndef DYNARRAY_H
+#define DYNARRAY_H
+
+#include <stdbool.h>
+#include <stdio.h>
 
 /**
  * @file dynarray.h
@@ -8,12 +11,9 @@
  *
  * TODO list:
  *
- *
+ * - build dictionary
  *
  */
-
-#include <stdbool.h>
-#include <stdio.h>
 
 #ifdef DEBUG
 /**
@@ -35,7 +35,7 @@
   exit(EXIT_FAILURE);
 
 /**
- * @brief Dynamic array dynArray declaration
+ * @brief Dynamic array entity
  */
 typedef struct DynamicArray {
   size_t elementSize;          ///< the element size
@@ -224,4 +224,4 @@ dynArray *subDA(dynArray *pDA, size_t min, size_t max);
  */
 bool appendDA(dynArray *pDA, dynArray *pSrc);
 
-#endif // DYN_ARRAY
+#endif // DYNARRAY_H

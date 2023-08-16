@@ -7,7 +7,7 @@
 /**
  * @private
  */
-void *_safeCalloc(const size_t count, const size_t size) {
+static inline void *_safeCalloc(const size_t count, const size_t size) {
   void *rtn;
   if ((rtn = calloc(count, size)) == NULL && errno == ENOMEM) {
     EXIT_ERROR("Out of memory while allocating. Count: %lu, Size: %lu\n", count,
@@ -19,7 +19,7 @@ void *_safeCalloc(const size_t count, const size_t size) {
 /**
  * @private
  */
-void *_safeReallocarray(void *ptr, const size_t count, const size_t size) {
+static inline void *_safeReallocarray(void *ptr, const size_t count, const size_t size) {
   void *rtn;
   if ((rtn = reallocarray(ptr, count, size)) == NULL && errno == ENOMEM) {
     EXIT_ERROR("Out of memory while reallocating. Count: %lu, Size: %lu\n",
@@ -55,7 +55,7 @@ bool _extendCapacity(dynArray *pDA) {
 /**
  * @private
  */
-void _swap(dynArray *pDA, void *a, void *b) {
+static inline void _swap(dynArray *pDA, void *a, void *b) {
   if (a != b) {
     memcpy(pDA->temp, a, pDA->elementSize);
     memcpy(a, b, pDA->elementSize);
@@ -66,7 +66,7 @@ void _swap(dynArray *pDA, void *a, void *b) {
 /**
  * @private
  */
-void *_toPtr(dynArray *pDA, size_t index) {
+static inline void *_toPtr(dynArray *pDA, size_t index) {
   return pDA->array + (index * pDA->elementSize);
 }
 
