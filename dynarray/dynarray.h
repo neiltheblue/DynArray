@@ -9,9 +9,21 @@
  *
  * @brief Dynamic Array header file
  *
- * TODO list:
+ * Create a dynamic array instance using createDA. For example:
  *
- * - build dictionary
+ * dynArray *pDALng = createDA(sizeof(long), NULL);
+ *
+ * To use the sort or search functions you will need a comparason
+ * implementation. These can be generated with the help of a macro. To generate
+ * the helper funtion declare an array data type in your header file. For
+ * example:
+ *
+ * DECLARE_COMPARE_TYPE(long)
+ *
+ * Then in your definition file include the macro to define you helper method.
+ * For exmaple:
+ *
+ * DEFINE_COMPARE_TYPE(long)
  *
  */
 
