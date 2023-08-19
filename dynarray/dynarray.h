@@ -57,6 +57,8 @@ typedef struct DynamicArray {
   void *array;                 ///< the array
   void *temp;                  ///< the temp element store
   struct DynamicArray *parent; ///< the parent array
+  int (*compare)(const void *a,
+                 const void *b); ///< the default comparator function
 } dynArray;
 
 /**
@@ -68,30 +70,26 @@ typedef struct DynamicArray {
  * void *b).
  *
  * @param TYPE the data type to be compared
- * @return -1, 0 or 1 if a is less than, equal to or greater than b
+ * @return <0, 0 or >0 if a is less than, equal to or greater than b
  *
  */
-#define DECLARE_COMPARE_TYPE(TYPE) int compareDA##TYPE(void *a, void *b);
+#define DECLARE_COMPARE_TYPE(TYPE)                                             \
+  int compareDA##TYPE(const void *a, const void *b);
 
 /**
  * @brief Basic type comparator function definition macro
  *
  * @param TYPE the data type to be compared
- * @return -1, 0 or 1 if a is less than, equal to or greater than b
+ * @return <0, 0 or >0 if a is less than, equal to or greater than b
  *
  */
 #define DEFINE_COMPARE_TYPE(TYPE)                                              \
-  int compareDA##TYPE(void *a, void *b) {                                      \
+  int compareDA##TYPE(const void *a, const void *b) {                          \
     return (*(TYPE *)a < *(TYPE *)b) ? -1 : (*(TYPE *)a > *(TYPE *)b) ? 1 : 0; \
   }
 
 /**
  * @brief Dynamic array creation parameters
- *
- * If the size is greater than 0 the initial capacity will be extended.
- *
- * The growth factor must be greater than 1.0 as it is used to extend the
- * current capacity.
  */
 typedef struct DynamicArrayParams {
   size_t size;     ///< the initial array size
@@ -100,21 +98,17 @@ typedef struct DynamicArrayParams {
 } dynArrayParams;
 
 /**
- * @brief Create a new dynamic array.
+ * @brief Create a new dynamic array
  *
  * @param elementSize the element size to reserve
+ * @param compare the default comparator function
  * @param params a pointer to the dynamic array parameters or NULL for default
  * @return An initialised dynamic array that
  *          should be freed with freeDA()
  */
-dynArray *createDA(size_t elementSize, dynArrayParams *params);
-
-/**
- * @brief Check if an array is dirty
- * @param pDA the array to check
- * @return 'true' if the array may be unsorted
- */
-bool isDirtyDA(dynArray *pDA);
+dynArray *createDA(size_t elementSize,
+                   int compare(const void *a, const void *b),
+                   dynArrayParams *params);
 
 /**
  * @brief Free a dynamic array instance
@@ -167,17 +161,16 @@ bool addAllDA(dynArray *pDA, const void *src, size_t length);
  * @brief Get a dynamic array value
  * @param pDA the array pointer to update
  * @param index the index to read
- * @param value the value pointer to set
- * @return 'true' if the index was in range
+ * @return a pointer to the value or NULL if not found
  */
-bool getDA(const dynArray *pDA, const size_t index, void *value);
+void* getDA(const dynArray *pDA, const size_t index);
 
 /**
  * @brief Sort the array
  * @param pDA the array pointer to update
- * @param cmp the comparative function to apply
+ * @param compare the comparative function to apply or NULL to use the default
  */
-void sortDA(dynArray *pDA, int cmp(void *a, void *b));
+void sortDA(dynArray *pDA, int compare(const void *a, const void *b));
 
 /**
  * @brief Reverse the array
@@ -201,13 +194,13 @@ dynArray *copyDA(dynArray *pDA);
  * If not already in order, the array will be sorted.
  *
  * @param pDA the array pointer to search
- * @param cmp the compare function
  * @param value the value to search for
  * @param index the retuned index if found
+ * @param compare the compare function  or NULL to use the default
  * @return 'true' if the value was found
  */
-bool searchDA(dynArray *pDA, int cmp(void *a, void *b), void *value,
-              size_t *index);
+bool searchDA(dynArray *pDA, void *value, size_t *index,
+              int compare(const void *a, const void *b));
 
 /**
  * @brief Create a sub array based on the parent array
@@ -236,4 +229,22 @@ dynArray *subDA(dynArray *pDA, size_t min, size_t max);
  */
 bool appendDA(dynArray *pDA, dynArray *pSrc);
 
-#endif // DYNARRAY_H
+/**
+ * @brief Compare two strings
+ * @param a the first string
+ * @param b the second string
+ * @return <0, 0 or >0 if a is less than, equal to or greater than b
+ */
+int compareString(const void *a, const void *b);
+
+/**
+ * @private
+ */
+void *_safeCalloc(const size_t count, const size_t size);
+
+/**
+ * @private
+ */
+void *_safeReallocarray(void *ptr, const size_t count, const size_t size);
+
+#endif

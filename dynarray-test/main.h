@@ -1,7 +1,7 @@
-#ifndef TEST_H
-#define TEST_H
+#ifndef MAIN_H
+#define MAIN_H
 
 #include "array.h"
-#include "dict.h"
+#include "tree.h"
 
 #endif

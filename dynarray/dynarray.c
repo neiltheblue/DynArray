@@ -7,7 +7,7 @@
 /**
  * @private
  */
-static inline void *_safeCalloc(const size_t count, const size_t size) {
+void *_safeCalloc(const size_t count, const size_t size) {
   void *rtn;
   if ((rtn = calloc(count, size)) == NULL && errno == ENOMEM) {
     EXIT_ERROR("Out of memory while allocating. Count: %lu, Size: %lu\n", count,
@@ -19,7 +19,7 @@ static inline void *_safeCalloc(const size_t count, const size_t size) {
 /**
  * @private
  */
-static inline void *_safeReallocarray(void *ptr, const size_t count, const size_t size) {
+void *_safeReallocarray(void *ptr, const size_t count, const size_t size) {
   void *rtn;
   if ((rtn = reallocarray(ptr, count, size)) == NULL && errno == ENOMEM) {
     EXIT_ERROR("Out of memory while reallocating. Count: %lu, Size: %lu\n",
@@ -31,7 +31,7 @@ static inline void *_safeReallocarray(void *ptr, const size_t count, const size_
 /**
  * @private
  */
-bool _extendCapacity(dynArray *pDA) {
+bool _extendCapacityDA(dynArray *pDA) {
   bool extended = false;
   if (pDA->size >= pDA->capacity) {
 
@@ -74,14 +74,14 @@ static inline void *_toPtr(dynArray *pDA, size_t index) {
  * @private
  */
 size_t _partition(dynArray *pDA, size_t low, size_t high,
-                  int cmp(void *a, void *b)) {
+                  int compare(const void *a, const void *b)) {
   void *pivot = _toPtr(pDA, high);
   void *pLow = _toPtr(pDA, low);
   size_t i = low;
 
   for (void *j = pLow; j < pivot; j += pDA->elementSize) {
 
-    if (cmp(j, pivot) < 0) {
+    if (compare(j, pivot) < 0) {
       _swap(pDA, _toPtr(pDA, i), j);
       i++;
     }
@@ -94,58 +94,61 @@ size_t _partition(dynArray *pDA, size_t low, size_t high,
  * @private
  */
 void _quickSort(dynArray *pDA, size_t low, size_t high,
-                int cmp(void *a, void *b)) {
+                int compare(const void *a, const void *b)) {
   if (low < high) {
 
-    size_t pi = _partition(pDA, low, high, cmp);
+    size_t pi = _partition(pDA, low, high, compare);
 
     if (pi > 0) {
-      _quickSort(pDA, low, pi - 1, cmp);
+      _quickSort(pDA, low, pi - 1, compare);
     }
-    _quickSort(pDA, low + 1, high, cmp);
+    _quickSort(pDA, low + 1, high, compare);
   }
 }
 
 /**
  * @private
  */
-bool _binarySearch(dynArray *pDA, int cmp(void *a, void *b), void *value,
-                   size_t *index, size_t min, size_t max) {
+bool _binarySearch(dynArray *pDA, int compare(const void *a, const void *b),
+                   void *value, size_t *index, size_t min, size_t max) {
   bool found = false;
   size_t diff = max - min;
 
   if (diff == 0) {
-    if (cmp(value, _toPtr(pDA, min)) == 0) {
+    if (compare(value, _toPtr(pDA, min)) == 0) {
       found = true;
       *index = min;
     }
   } else {
     size_t mid = min + (diff / 2);
-    int result = cmp(value, _toPtr(pDA, mid));
+    int result = compare(value, _toPtr(pDA, mid));
     if (result == 0) {
       found = true;
       *index = mid;
     } else if (result == -1) {
-      found = _binarySearch(pDA, cmp, value, index, min, mid);
+      found = _binarySearch(pDA, compare, value, index, min, mid);
     } else {
-      found = _binarySearch(pDA, cmp, value, index, mid + 1, max);
+      found = _binarySearch(pDA, compare, value, index, mid + 1, max);
     }
   }
 
   return found;
 }
 
-bool searchDA(dynArray *pDA, int cmp(void *a, void *b), void *value,
-              size_t *index) {
+bool searchDA(dynArray *pDA, void *value, size_t *index,
+              int compare(const void *a, const void *b)) {
   bool found = false;
   if (pDA->size > 0) {
-    sortDA(pDA, cmp);
-    found = _binarySearch(pDA, cmp, value, index, 0, pDA->size - 1);
+    sortDA(pDA, compare);
+    found = _binarySearch(pDA, compare ? compare : pDA->compare, value, index,
+                          0, pDA->size - 1);
   }
   return found;
 }
 
-dynArray *createDA(size_t elementSize, dynArrayParams *params) {
+dynArray *createDA(size_t elementSize,
+                   int compare(const void *a, const void *b),
+                   dynArrayParams *params) {
   dynArray *pDA;
 
   if (params == NULL) {
@@ -163,14 +166,15 @@ dynArray *createDA(size_t elementSize, dynArrayParams *params) {
   pDA->growth = params->growth;
   pDA->size = params->size;
   pDA->elementSize = elementSize;
+  pDA->compare = compare;
   pDA->temp = _safeCalloc(1, elementSize);
   pDA->array = _safeCalloc(pDA->capacity, elementSize);
   pDA->parent = NULL;
   return pDA;
 }
 
-void sortDA(dynArray *pDA, int cmp(void *a, void *b)) {
-  _quickSort(pDA, 0, pDA->size - 1, cmp);
+void sortDA(dynArray *pDA, int compare(const void *a, const void *b)) {
+  _quickSort(pDA, 0, pDA->size - 1, compare ? compare : pDA->compare);
 }
 
 bool addAllDA(dynArray *pDA, const void *src, size_t length) {
@@ -179,7 +183,7 @@ bool addAllDA(dynArray *pDA, const void *src, size_t length) {
     size_t lastIndex = pDA->size;
     pDA->size += length;
 
-    _extendCapacity(pDA);
+    _extendCapacityDA(pDA);
 
     void *dest = _toPtr(pDA, lastIndex);
     memcpy(dest, src, pDA->elementSize * length);
@@ -205,16 +209,15 @@ bool setDA(dynArray *pDA, const size_t index, const void *value) {
   return ok;
 }
 
-bool getDA(const dynArray *pDA, const size_t index, void *value) {
+void *getDA(const dynArray *pDA, const size_t index) {
 
-  bool ok = true;
+  void *entry = NULL;
   if (index >= 0 && index < pDA->size) {
-    memcpy(value, pDA->array + (index * pDA->elementSize), pDA->elementSize);
+    entry = pDA->array + (index * pDA->elementSize);
   } else {
     DEBUG_LOG("Index out of range: %ld, array size: %ld\n", index, pDA->size);
-    ok = false;
   }
-  return ok;
+  return entry;
 }
 
 void reverseDA(dynArray *pDA) {
@@ -233,7 +236,7 @@ void reduceMemDA(dynArray *pDA) {
 
 dynArray *copyDA(dynArray *pDA) {
   dynArray *copy =
-      createDA(pDA->elementSize,
+      createDA(pDA->elementSize, pDA->compare,
                &(dynArrayParams){.size = pDA->size, .growth = pDA->growth});
   memcpy(copy->array, pDA->array, pDA->size * pDA->elementSize);
   return copy;
@@ -251,6 +254,7 @@ dynArray *subDA(dynArray *pDA, size_t min, size_t max) {
     sub->temp = _safeCalloc(1, sub->elementSize);
     sub->array = _toPtr(pDA, min);
     sub->parent = pDA;
+    sub->compare = pDA->compare;
   }
 
   return sub;
@@ -273,3 +277,5 @@ void freeDA(dynArray *pDA) {
     free(pDA);
   }
 }
+
+int compareString(const void *a, const void *b) { return strcmp(a, b); }

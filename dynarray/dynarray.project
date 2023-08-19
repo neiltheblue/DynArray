@@ -3,11 +3,11 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
-    <File Name="hashdict.c"/>
+    <File Name="hashtree.c"/>
     <File Name="dynarray.c"/>
   </VirtualDirectory>
   <VirtualDirectory Name="include">
-    <File Name="hashdict.h"/>
+    <File Name="hashtree.h"/>
     <File Name="dynarray.h"/>
   </VirtualDirectory>
   <Settings Type="Static Library">

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="dynarray-test" Version="11000" InternalType="Console">
   <VirtualDirectory Name="include">
-    <File Name="dict.h"/>
+    <File Name="tree.h"/>
     <File Name="array.h"/>
     <File Name="main.h"/>
     <File Name="zcmocka.h"/>
@@ -9,7 +9,7 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
-    <File Name="dict.c"/>
+    <File Name="tree.c"/>
     <File Name="array.c"/>
     <File Name="main.c"/>
   </VirtualDirectory>
