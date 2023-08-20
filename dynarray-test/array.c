@@ -44,7 +44,7 @@ void test_addDA(void **state) {
 
   size_t i, max = 18;
   for (i = 0; i < max; i++) {
-    assert_int_equal(addDA(pDALng, &i), true);
+    assert_int_equal(*(size_t *)(addDA(pDALng, &i)), i);
   }
 
   assert_int_equal(pDALng->capacity, 22);
@@ -57,7 +57,7 @@ void test_addAllDA(void **state) {
   assert_int_equal(addAllDA(pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10),
                    true);
 
-  int i;
+  long i;
   long *read;
   for (i = 0; i < 10; i++) {
     read = getDA(pDALng, i);
@@ -73,7 +73,7 @@ void test_addAllDA(void **state) {
   }
 
   for (i = 20; i < 30; i++) {
-    assert_int_equal(addDA(pDALng, &i), true);
+    assert_int_equal(*(long *)addDA(pDALng, &i), i);
   }
   assert_int_equal(pDALng->size, 30);
 }
@@ -237,7 +237,7 @@ void test_subDA(void **state) {
 
   dynArray *sub = subDA(pDALng, 2, 7);
   assert_int_equal(sub->parent, pDALng);
-  assert_int_equal(addDA(sub, &value), false);
+  assert_int_equal((long *)addDA(sub, &value), NULL);
 
   reverseDA(sub);
   setDA(sub, 5, &value);
@@ -305,12 +305,12 @@ void test_binSearch(void **state) {
 
   value = 7;
   assert_int_equal(searchDA(pDALng, &value, &index, compareDAlong), true);
-  read=getDA(pDALng, index);
+  read = getDA(pDALng, index);
   assert_int_equal(*read, 7);
 
   value = 6;
   assert_int_equal(searchDA(pDALng, &value, &index, compareDAlong), true);
-  read=getDA(pDALng, index);
+  read = getDA(pDALng, index);
   assert_int_equal(*read, 6);
 
   value = 0;
@@ -337,19 +337,19 @@ void test_appendDA(void **state) {
   appendDA(other, pDALng);
   assert_int_equal(other->size, pDALng->size);
   for (int i = 0; i < pDALng->size; i++) {
-    v1=getDA(other, i);
-    v2=getDA(pDALng, i);
+    v1 = getDA(other, i);
+    v2 = getDA(pDALng, i);
     assert_int_equal(*v1, *v2);
   }
 
   appendDA(other, pDALng);
   assert_int_equal(other->size, pDALng->size * 2);
   for (int i = 0; i < pDALng->size; i++) {
-    v1=getDA(other, i);
-    v2=getDA(pDALng, i);
+    v1 = getDA(other, i);
+    v2 = getDA(pDALng, i);
     assert_int_equal(*v1, *v2);
 
-    v1=getDA(other, i + pDALng->size);
+    v1 = getDA(other, i + pDALng->size);
     assert_int_equal(*v1, *v2);
   }
 

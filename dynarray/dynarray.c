@@ -194,7 +194,16 @@ bool addAllDA(dynArray *pDA, const void *src, size_t length) {
   return added;
 }
 
-bool addDA(dynArray *pDA, const void *value) { return addAllDA(pDA, value, 1); }
+void *addDA(dynArray *pDA, const void *value) {
+  void *rtn;
+  if (pDA->parent == NULL) {
+    addAllDA(pDA, value, 1);
+    rtn = getDA(pDA, pDA->size - 1);
+  } else {
+    rtn = NULL;
+  }
+  return rtn;
+}
 
 bool setDA(dynArray *pDA, const size_t index, const void *value) {
   bool ok = true;

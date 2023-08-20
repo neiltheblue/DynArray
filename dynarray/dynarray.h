@@ -140,10 +140,10 @@ bool setDA(dynArray *pDA, const size_t index, const void *value);
  * This will only add values if the array is not a sub-array.
  *
  * @param pDA the array pointer to update
- * @param value the value to apply
- * @return 'true' if the values was added
+ * @param value the value to copy into the array
+ * @return the value added to the array
  */
-bool addDA(dynArray *pDA, const void *value);
+void *addDA(dynArray *pDA, const void *value);
 
 /**
  * @brief Add a dynamic array value
@@ -151,7 +151,7 @@ bool addDA(dynArray *pDA, const void *value);
  * This will only add values if the array is not a sub-array.
  *
  * @param pDA the array pointer to update
- * @param src the source value array
+ * @param src the source value array to cop yinto the array
  * @param length the number of elements to copy
  * @return 'true' if the values were added
  */

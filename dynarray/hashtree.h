@@ -19,12 +19,12 @@
  * @brief A key/value entity
  */
 typedef struct HashEntry {
-  uint32_t hash;  ///< the hash
-  void *key;      ///< the key
-  void *value;    ///< the value
-  size_t *parent; ///< the parent node
-  size_t *left;   ///< the smaller left node
-  size_t *right;  ///< the larger right node
+  uint32_t hash; ///< the hash
+  void *key;     ///< the key
+  void *value;   ///< the value
+  size_t parent; ///< the parent node
+  size_t left;   ///< the smaller left node
+  size_t right;  ///< the larger right node
 } hashEntry;
 
 /**
@@ -32,7 +32,7 @@ typedef struct HashEntry {
  */
 typedef struct HashTree {
   dynArray *da; ///< the storage array
-  size_t root; ///< the root node
+  size_t root;  ///< the root node
 } hashTree;
 
 /**
