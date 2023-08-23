@@ -34,10 +34,7 @@ void test_addFirstLevelHT(void **state) {
   pHT = createHT(compareString, NULL);
   makeKeyValues(count, keys, values);
 
-  for (int i = 0; i < count; i++) {
-    addHT(pHT, keys[i], strlen(keys[i]), values[i]);
-  }
-
+  addHT(pHT, keys[0], strlen(keys[0]), values[0]);
   assert_int_equal(pHT->da->size, 1);
   assert_int_equal(pHT->root, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->parent, 0);
@@ -48,33 +45,66 @@ void test_addFirstLevelHT(void **state) {
   assert_int_equal(pHT->root, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->parent, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->value, values[1]);
+
+  assert_int_equal(maxDepthHT(pHT, 0), 1);
 }
 
 void test_addSecondLevelHT(void **state) {
-  int count = 5;
+  int count = 10;
   char keys[count][buffer];
   char values[count][buffer];
   pHT = createHT(compareString, NULL);
   makeKeyValues(count, keys, values);
 
-  addHT(pHT, keys[2], strlen(keys[2]), values[2]);
+  addHT(pHT, keys[3], strlen(keys[3]), values[3]);
   assert_int_equal(pHT->da->size, 1);
   assert_int_equal(pHT->root, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->parent, 0);
-  assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->value, values[2]);
+  assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->value, values[3]);
 
   addHT(pHT, keys[1], strlen(keys[1]), values[1]);
   assert_int_equal(pHT->da->size, 2);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 1))->parent, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 1))->value, values[1]);
-  
-  addHT(pHT, keys[5], strlen(keys[5]), values[5]);
+
+  addHT(pHT, keys[7], strlen(keys[7]), values[7]);
   assert_int_equal(pHT->da->size, 3);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->parent, 0);
-  assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->value, values[5]);  
+  assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->value, values[7]);
+
+  assert_int_equal(maxDepthHT(pHT, 0), 3);
 }
 
 void test_addThirdLevelHT(void **state) {
+  int count = 10;
+  char keys[count][buffer];
+  char values[count][buffer];
+  pHT = createHT(compareString, NULL);
+  makeKeyValues(count, keys, values);
+
+  addHT(pHT, keys[3], strlen(keys[3]), values[3]);
+  assert_int_equal(pHT->da->size, 1);
+  assert_int_equal(pHT->root, 0);
+  assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->parent, 0);
+  assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->value, values[3]);
+
+  addHT(pHT, keys[1], strlen(keys[1]), values[1]);
+  assert_int_equal(pHT->da->size, 2);
+  assert_int_equal(((hashEntry *)getDA(pHT->da, 1))->parent, 0);
+  assert_int_equal(((hashEntry *)getDA(pHT->da, 1))->value, values[1]);
+
+  addHT(pHT, keys[7], strlen(keys[7]), values[7]);
+  assert_int_equal(pHT->da->size, 3);
+  assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->parent, 0);
+  assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->value, values[7]);
+
+  size_t idx = 0;
+  printf("Index %lu\n", idx);
+  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  assert_int_equal(pHT->da->size, 4);
+}
+
+void test_drawNode(void **state) {
   int count = 5;
   char keys[count][buffer];
   char values[count][buffer];
@@ -82,32 +112,25 @@ void test_addThirdLevelHT(void **state) {
   makeKeyValues(count, keys, values);
 
   for (int i = 0; i < count; i++) {
-    printf("%d) Key: %s Value: %s\n", i, keys[i], values[i]);
+    addHT(pHT, keys[i], strlen(keys[i]), values[i]);
   }
-
-  addHT(pHT, keys[2], strlen(keys[2]), values[2]);
-  assert_int_equal(pHT->da->size, 1);
-  assert_int_equal(pHT->root, 0);
-  assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->parent, 0);
-  assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->value, values[2]);
-
-  addHT(pHT, keys[1], strlen(keys[1]), values[1]);
-  assert_int_equal(pHT->da->size, 2);
-  assert_int_equal(((hashEntry *)getDA(pHT->da, 1))->parent, 0);
-  assert_int_equal(((hashEntry *)getDA(pHT->da, 1))->value, values[1]);
-  
-  addHT(pHT, keys[5], strlen(keys[5]), values[5]);
-  assert_int_equal(pHT->da->size, 3);
-  assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->parent, 0);
-  assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->value, values[5]);  
-  
-  addHT(pHT, keys[0], strlen(keys[0]), values[0]);
-  assert_int_equal(pHT->da->size, 4);
-//  assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->parent, 0);
-//  assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->value, values[5]);    
+  printf("depth: %d\n", maxDepthHT(pHT, 0));
+  drawNode(pHT, 0, NULL);
 }
 
-//TODO add draw tree method
+void test_getNode(void **state) {
+  int count = 10;
+  char keys[count][buffer];
+  char values[count][buffer];
+  pHT = createHT(compareString, NULL);
+  makeKeyValues(count, keys, values);
+
+  for (int i = 0; i < count; i++) {
+    addHT(pHT, keys[i], strlen(keys[i]), values[i]);
+  }
+  drawNode(pHT, 0, NULL);
+//  getHT(key[0]);
+}
 
 int setupHT(void **state) {
 
@@ -127,9 +150,15 @@ int teardownHT(void **state) {
 int test_tree(void) {
   const struct CMUnitTest tests[] = {
       cmocka_unit_test_setup_teardown(test_hash, setupHT, teardownHT),
-      cmocka_unit_test_setup_teardown(test_addFirstLevelHT, setupHT, teardownHT),
-	  cmocka_unit_test_setup_teardown(test_addSecondLevelHT, setupHT, teardownHT),
-	  cmocka_unit_test_setup_teardown(test_addThirdLevelHT, setupHT, teardownHT),	  
+      cmocka_unit_test_setup_teardown(test_addFirstLevelHT, setupHT,
+                                      teardownHT),
+      cmocka_unit_test_setup_teardown(test_addSecondLevelHT, setupHT,
+                                      teardownHT),
+      cmocka_unit_test_setup_teardown(test_addThirdLevelHT, setupHT,
+                                      teardownHT),
+      cmocka_unit_test_setup_teardown(test_drawNode, setupHT, teardownHT),
+	  cmocka_unit_test_setup_teardown(test_getNode, setupHT, teardownHT),	  
+
   };
 
   int count_fail_tests = cmocka_run_group_tests(tests, setupHT, teardownHT);

@@ -1,5 +1,6 @@
 #include "hashtree.h"
 #include <stdlib.h>
+#include <string.h>
 
 const uint32_t Prime1 = 2654435761U;
 const uint32_t Prime2 = 2246822519U;
@@ -105,6 +106,62 @@ static inline hashEntry *_getRootNodeHT(hashTree *pHT, size_t nodeIndex) {
 /**
  * @private
  */
+void _drawNode(hashTree *pHT, size_t nodeIdx, char *topPrefix, char *botPrefix,
+               FILE *file) {
+  char nextTopPrefix[strlen(topPrefix) + 3];
+  char nextBotPrefix[strlen(botPrefix) + 3];
+  hashEntry *entry = getDA(pHT->da, nodeIdx);
+
+  if (entry->right != -1) {
+    strcpy(nextTopPrefix, topPrefix);
+    strcat(nextTopPrefix, "   ");
+    strcpy(nextBotPrefix, topPrefix);
+    strcat(nextBotPrefix, "  |");
+    _drawNode(pHT, entry->right, nextTopPrefix, nextBotPrefix, file);
+  } else {
+    fprintf(file, "%s   .\n", topPrefix);
+  }
+  fprintf(file, "%s  /\n", topPrefix);
+
+  fprintf(file, "%s+%02lu %s [%u]\n", topPrefix, nodeIdx, (char *)entry->key,
+          entry->hash);
+  fprintf(file, "%s  \\\n", botPrefix);
+
+  if (entry->left != -1) {
+    strcpy(nextTopPrefix, botPrefix);
+    strcat(nextTopPrefix, "  |");
+    strcpy(nextBotPrefix, botPrefix);
+    strcat(nextBotPrefix, "   ");
+    _drawNode(pHT, entry->left, nextTopPrefix, nextBotPrefix, file);
+  } else {
+    fprintf(file, "%s   .\n", botPrefix);
+  }
+}
+
+void drawNode(hashTree *pHT, size_t nodeIdx, FILE *file) {
+  if (file == NULL) {
+    file = stdout;
+  }
+  fprintf(file, "\n");
+  _drawNode(pHT, 0, "", "", file);
+  fprintf(file, "\n");
+}
+
+int maxDepthHT(hashTree *pHT, size_t nodeIndex) {
+  hashEntry *entry = _getIndexNodeHT(pHT, nodeIndex);
+  int depth = 1;
+  if (entry->left != -1) {
+    depth += maxDepthHT(pHT, entry->left);
+  }
+  if (entry->right != -1) {
+    depth += maxDepthHT(pHT, entry->right);
+  }
+  return depth;
+}
+
+/**
+ * @private
+ */
 void _addToNodeHT(hashTree *pHT, hashEntry *entry, size_t nodeIndex) {
   hashEntry *node = _getIndexNodeHT(pHT, nodeIndex);
   int comp = _compareHashElement(pHT, entry, node);
@@ -116,18 +173,22 @@ void _addToNodeHT(hashTree *pHT, hashEntry *entry, size_t nodeIndex) {
     // add left node
     entry = addDA(pHT->da, entry);
     entry->parent = nodeIndex;
+	// get new node as may have reallocated
+	node = _getIndexNodeHT(pHT, nodeIndex); 
     node->left = pHT->da->size - 1;
   } else if (comp > 0 && node->right == -1) {
     // add right node
-    entry = addDA(pHT->da, entry);
+    entry = addDA(pHT->da, entry);	
     entry->parent = nodeIndex;
+	// get new node as may have reallocated
+	node = _getIndexNodeHT(pHT, nodeIndex); 	
     node->right = pHT->da->size - 1;
   } else if (comp < 0) {
     // handle left node addition
-	_addToNodeHT(pHT, entry, node->left);
-  } else{
+    _addToNodeHT(pHT, entry, node->left);
+  } else {
     // handle right node addition
-	_addToNodeHT(pHT, entry, node->right);
+    _addToNodeHT(pHT, entry, node->right);
   }
 }
 

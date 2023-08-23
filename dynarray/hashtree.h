@@ -10,7 +10,6 @@
  * @brief Dynamic Array header file
  *
  * TODO:
- * - Add key/values
  * - Add tree search
  * - balance tree
  */
@@ -75,6 +74,22 @@ hashTree *createHT(int compare(const void *a, const void *b),
  * @param value the value pointer
  */
 void addHT(hashTree *pHT, void *key, size_t keyLength, void *value);
+
+/**
+ * @brief Get the tree depth of the sub-tree
+ * @param pHT the hash tree pointer
+ * @param nodeIndex the node index to count from
+ * @return the max tree depth from the node
+ */
+int maxDepthHT(hashTree *pHT, size_t nodeIndex);
+
+/**
+ * @brief Draw the sub node
+ * @param pHT the hash tree pointer
+ * @param file the stream to write to or stdout if NULL
+ * @param nodeIdx the node index to draw from
+ */
+void drawNode(hashTree *pHT, size_t nodeIdx, FILE *file);
 
 /**
  * @brief Free a hash tree
