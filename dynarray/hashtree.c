@@ -173,15 +173,15 @@ void _addToNodeHT(hashTree *pHT, hashEntry *entry, size_t nodeIndex) {
     // add left node
     entry = addDA(pHT->da, entry);
     entry->parent = nodeIndex;
-	// get new node as may have reallocated
-	node = _getIndexNodeHT(pHT, nodeIndex); 
+    // get new node as may have reallocated
+    node = _getIndexNodeHT(pHT, nodeIndex);
     node->left = pHT->da->size - 1;
   } else if (comp > 0 && node->right == -1) {
     // add right node
-    entry = addDA(pHT->da, entry);	
+    entry = addDA(pHT->da, entry);
     entry->parent = nodeIndex;
-	// get new node as may have reallocated
-	node = _getIndexNodeHT(pHT, nodeIndex); 	
+    // get new node as may have reallocated
+    node = _getIndexNodeHT(pHT, nodeIndex);
     node->right = pHT->da->size - 1;
   } else if (comp < 0) {
     // handle left node addition
@@ -190,6 +190,30 @@ void _addToNodeHT(hashTree *pHT, hashEntry *entry, size_t nodeIndex) {
     // handle right node addition
     _addToNodeHT(pHT, entry, node->right);
   }
+}
+
+hashEntry *_findNodeHT(hashTree *pHT, hashEntry *entry, size_t nodeIndex) {
+  hashEntry *node = _getIndexNodeHT(pHT, nodeIndex);
+  int comp = _compareHashElement(pHT, entry, node);
+
+  if (comp < 0) {
+    node = (node->left != -1) ? _findNodeHT(pHT, entry, node->left) : NULL;
+  } else if (comp > 0) {
+    node = (node->right != -1) ? _findNodeHT(pHT, entry, node->right) : NULL;
+  }
+  // key matches node so return node
+
+  return node;
+}
+
+hashEntry *getHT(hashTree *pHT, void *key, size_t keyLength) {
+  hashEntry entry = (hashEntry){.key = key,
+                                .value = NULL,
+                                .hash = hash(key, keyLength, 0),
+                                .left = -1,
+                                .right = -1};
+
+  return _findNodeHT(pHT, &entry, pHT->root);
 }
 
 hashTree *createHT(int compare(const void *a, const void *b),

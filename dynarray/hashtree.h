@@ -10,8 +10,9 @@
  * @brief Dynamic Array header file
  *
  * TODO:
- * - Add tree search
  * - balance tree
+ * - remove node
+ * - generate a set from a hash tree
  */
 
 /**
@@ -90,6 +91,16 @@ int maxDepthHT(hashTree *pHT, size_t nodeIndex);
  * @param nodeIdx the node index to draw from
  */
 void drawNode(hashTree *pHT, size_t nodeIdx, FILE *file);
+
+
+/**
+ * @brief Find a node in the tree
+ * @param pHT the hash tree pointer to search
+ * @param key the entry key
+ * @param keyLength the key length
+ * @return the found entry or NULL if not found
+ */
+hashEntry *getHT(hashTree *pHT, void *key, size_t keyLength);
 
 /**
  * @brief Free a hash tree

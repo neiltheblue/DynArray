@@ -125,11 +125,41 @@ void test_getNode(void **state) {
   pHT = createHT(compareString, NULL);
   makeKeyValues(count, keys, values);
 
-  for (int i = 0; i < count; i++) {
+  for (int i = 0; i < count - 1; i++) {
     addHT(pHT, keys[i], strlen(keys[i]), values[i]);
   }
-  drawNode(pHT, 0, NULL);
-//  getHT(key[0]);
+
+  size_t idx;
+  hashEntry *found;
+
+  idx = 0;
+  found = getHT(pHT, keys[idx], strlen(keys[idx]));
+  assert_non_null(found);
+  assert_int_equal(strcmp(found->key, keys[idx]), 0);
+
+  idx = 1;
+  found = getHT(pHT, keys[idx], strlen(keys[idx]));
+  assert_non_null(found);
+  assert_int_equal(strcmp(found->key, keys[idx]), 0);
+
+  idx = 2;
+  found = getHT(pHT, keys[idx], strlen(keys[idx]));
+  assert_non_null(found);
+  assert_int_equal(strcmp(found->key, keys[idx]), 0);
+
+  idx = 3;
+  found = getHT(pHT, keys[idx], strlen(keys[idx]));
+  assert_non_null(found);
+  assert_int_equal(strcmp(found->key, keys[idx]), 0);
+
+  idx = 4;
+  found = getHT(pHT, keys[idx], strlen(keys[idx]));
+  assert_non_null(found);
+  assert_int_equal(strcmp(found->key, keys[idx]), 0);
+
+  idx = 10;
+  found = getHT(pHT, keys[idx], strlen(keys[idx]));
+  assert_null(found);
 }
 
 int setupHT(void **state) {
@@ -157,7 +187,7 @@ int test_tree(void) {
       cmocka_unit_test_setup_teardown(test_addThirdLevelHT, setupHT,
                                       teardownHT),
       cmocka_unit_test_setup_teardown(test_drawNode, setupHT, teardownHT),
-	  cmocka_unit_test_setup_teardown(test_getNode, setupHT, teardownHT),	  
+      cmocka_unit_test_setup_teardown(test_getNode, setupHT, teardownHT),
 
   };
 
