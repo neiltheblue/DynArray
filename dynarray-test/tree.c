@@ -72,6 +72,11 @@ void test_addSecondLevelHT(void **state) {
   assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->parent, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->value, values[7]);
 
+  addHT(pHT, keys[8], strlen(keys[8]), values[8]);
+  assert_int_equal(pHT->da->size, 4);
+  assert_int_equal(((hashEntry *)getDA(pHT->da, 3))->parent, 2);
+  assert_int_equal(((hashEntry *)getDA(pHT->da, 3))->value, values[8]);
+
   assert_int_equal(maxDepthHT(pHT, 0), 3);
 }
 
@@ -162,6 +167,152 @@ void test_getNode(void **state) {
   assert_null(found);
 }
 
+bool visit_test(hashEntry *entry, size_t entryIndex, void *ref) {
+  int *counter = (int *)ref;
+  (*counter)++;
+  return true;
+}
+
+void test_vist(void **state) {
+  int count = 10;
+  char keys[count][buffer];
+  char values[count][buffer];
+  pHT = createHT(compareString, NULL);
+  makeKeyValues(count, keys, values);
+
+  for (int i = 0; i < count; i++) {
+    addHT(pHT, keys[i], strlen(keys[i]), values[i]);
+  }
+
+  int counter = 0;
+  visitNodesHT(pHT, visit_test, &counter);
+  assert_int_equal(counter, count);
+}
+
+bool checkBalance(hashEntry *entry, size_t entryIndex, void *ref) {
+
+  int left = maxDepthHT(pHT, entry->left);
+  int right = maxDepthHT(pHT, entry->right);
+  int diff = abs(left - right);
+  assert_true(diff < 2);
+
+  if (entry->left != -1) {
+    assert_true(((hashEntry *)getDA(pHT->da, entry->left))->hash < entry->hash);
+    assert_int_equal(((hashEntry *)getDA(pHT->da, entry->left))->parent,
+                     entryIndex);
+  }
+  if (entry->right != -1) {
+    assert_true(((hashEntry *)getDA(pHT->da, entry->right))->hash >
+                entry->hash);
+    assert_int_equal(((hashEntry *)getDA(pHT->da, entry->right))->parent,
+                     entryIndex);
+  }
+
+  return true;
+}
+
+void test_balanceNone(void **state) {
+  int count = 10;
+  char keys[count][buffer];
+  char values[count][buffer];
+  pHT = createHT(compareString, NULL);
+  makeKeyValues(count, keys, values);
+
+  for (int i = 0; i < 1; i++) {
+    addHT(pHT, keys[i], strlen(keys[i]), values[i]);
+  }
+  balanceHT(pHT);
+  assert_int_equal(maxDepthHT(pHT, pHT->root), 1);
+}
+
+void test_balanceLeft(void **state) {
+  int count = 10;
+  char keys[count][buffer];
+  char values[count][buffer];
+  pHT = createHT(compareString, NULL);
+  makeKeyValues(count, keys, values);
+
+  for (int i = 0; i < 7; i++) {
+    addHT(pHT, keys[i], strlen(keys[i]), values[i]);
+  }
+  balanceHT(pHT);
+  visitNodesHT(pHT, checkBalance, NULL);
+}
+
+void test_balanceRight(void **state) {
+  int count = 10;
+  char keys[count][buffer];
+  char values[count][buffer];
+  pHT = createHT(compareString, NULL);
+  makeKeyValues(count, keys, values);
+
+  int idx;
+  idx = 0;
+  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  idx = 5;
+  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  idx = 4;
+  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  idx = 6;
+  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  idx = 1;
+  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  idx = 7;
+  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  idx = 3;
+  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+
+  balanceHT(pHT);
+  assert_int_equal(maxDepthHT(pHT, pHT->root), 4);
+  visitNodesHT(pHT, checkBalance, NULL);
+}
+
+void test_balanceRootRight(void **state) {
+  int count = 10;
+  char keys[count][buffer];
+  char values[count][buffer];
+  pHT = createHT(compareString, NULL);
+  makeKeyValues(count, keys, values);
+
+  int idx;
+  idx = 0;
+  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  idx = 4;
+  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  idx = 5;
+  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  idx = 6;
+  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+
+  balanceHT(pHT);
+  assert_int_equal(pHT->root, 1);
+  assert_int_equal(maxDepthHT(pHT, pHT->root), 3);
+  visitNodesHT(pHT, checkBalance, NULL);
+}
+
+void test_balanceRootLeft(void **state) {
+  int count = 10;
+  char keys[count][buffer];
+  char values[count][buffer];
+  pHT = createHT(compareString, NULL);
+  makeKeyValues(count, keys, values);
+
+  int idx;
+  idx = 6;
+  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  idx = 5;
+  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  idx = 0;
+  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  idx = 4;
+  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+
+  balanceHT(pHT);
+  assert_int_equal(pHT->root, 1);
+  assert_int_equal(maxDepthHT(pHT, pHT->root), 3);
+  visitNodesHT(pHT, checkBalance, NULL);
+}
+
 int setupHT(void **state) {
 
   pHT = NULL;
@@ -188,6 +339,14 @@ int test_tree(void) {
                                       teardownHT),
       cmocka_unit_test_setup_teardown(test_drawNode, setupHT, teardownHT),
       cmocka_unit_test_setup_teardown(test_getNode, setupHT, teardownHT),
+      cmocka_unit_test_setup_teardown(test_balanceNone, setupHT, teardownHT),
+      cmocka_unit_test_setup_teardown(test_balanceLeft, setupHT, teardownHT),
+      cmocka_unit_test_setup_teardown(test_balanceRight, setupHT, teardownHT),
+      cmocka_unit_test_setup_teardown(test_balanceRootRight, setupHT,
+                                      teardownHT),
+      cmocka_unit_test_setup_teardown(test_balanceRootLeft, setupHT,
+                                      teardownHT),
+      cmocka_unit_test_setup_teardown(test_vist, setupHT, teardownHT),
 
   };
 

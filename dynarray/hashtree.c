@@ -123,8 +123,8 @@ void _drawNode(hashTree *pHT, size_t nodeIdx, char *topPrefix, char *botPrefix,
   }
   fprintf(file, "%s  /\n", topPrefix);
 
-  fprintf(file, "%s+%02lu %s [%u]\n", topPrefix, nodeIdx, (char *)entry->key,
-          entry->hash);
+  fprintf(file, "%s+%02lu[%02lu] %s [%u]\n", topPrefix, nodeIdx, entry->parent,
+          (char *)entry->key, entry->hash);
   fprintf(file, "%s  \\\n", botPrefix);
 
   if (entry->left != -1) {
@@ -143,20 +143,8 @@ void drawNode(hashTree *pHT, size_t nodeIdx, FILE *file) {
     file = stdout;
   }
   fprintf(file, "\n");
-  _drawNode(pHT, 0, "", "", file);
+  _drawNode(pHT, pHT->root, "", "", file);
   fprintf(file, "\n");
-}
-
-int maxDepthHT(hashTree *pHT, size_t nodeIndex) {
-  hashEntry *entry = _getIndexNodeHT(pHT, nodeIndex);
-  int depth = 1;
-  if (entry->left != -1) {
-    depth += maxDepthHT(pHT, entry->left);
-  }
-  if (entry->right != -1) {
-    depth += maxDepthHT(pHT, entry->right);
-  }
-  return depth;
 }
 
 /**
@@ -192,6 +180,9 @@ void _addToNodeHT(hashTree *pHT, hashEntry *entry, size_t nodeIndex) {
   }
 }
 
+/**
+ * @private
+ */
 hashEntry *_findNodeHT(hashTree *pHT, hashEntry *entry, size_t nodeIndex) {
   hashEntry *node = _getIndexNodeHT(pHT, nodeIndex);
   int comp = _compareHashElement(pHT, entry, node);
@@ -206,6 +197,121 @@ hashEntry *_findNodeHT(hashTree *pHT, hashEntry *entry, size_t nodeIndex) {
   return node;
 }
 
+/**
+ * @private
+ */
+void _balanceNodeHT(hashTree *pHT, size_t nodeIndex, int side) {
+  hashEntry *node = _getIndexNodeHT(pHT, nodeIndex);
+
+  if (node->left != -1) {
+    _balanceNodeHT(pHT, node->left, -1);
+  }
+
+  if (node->right != -1) {
+    _balanceNodeHT(pHT, node->right, 1);
+  }
+
+  unsigned int depthLeft = (node->left != -1) ? maxDepthHT(pHT, node->left) : 0;
+  unsigned int depthRight =
+      (node->right != -1) ? maxDepthHT(pHT, node->right) : 0;
+  int diff = depthLeft - depthRight;
+
+  if (diff < -1 || diff > 1) {
+
+    size_t childIdx;
+    hashEntry *childNode;
+
+    if (diff < -1) {
+      // need to rotate left
+      childIdx = node->right;
+      childNode = _getIndexNodeHT(pHT, childIdx);
+
+      // rotate the nodes
+      node->right = childNode->left;
+      childNode->left = nodeIndex;
+      _getIndexNodeHT(pHT, node->right)->parent = nodeIndex;
+
+    } else if (diff > 1) {
+      // need to rotate right
+      childIdx = node->left;
+      childNode = _getIndexNodeHT(pHT, childIdx);
+
+      // rotate the nodes
+      node->left = childNode->right;
+      childNode->right = nodeIndex;
+      _getIndexNodeHT(pHT, node->left)->parent = nodeIndex;
+    }
+
+    if (pHT->root != nodeIndex) {
+      // if not root node
+      size_t parentIdx = node->parent;
+
+      // update the parent link
+      childNode->parent = node->parent;
+      if (side < 0) {
+        _getIndexNodeHT(pHT, parentIdx)->left = childIdx;
+      } else if (side > 0) {
+        _getIndexNodeHT(pHT, parentIdx)->right = childIdx;
+      }
+    } else {
+      // if root node
+      pHT->root = childIdx;
+
+      // update the parent link
+      childNode->parent = childIdx;
+    }
+
+    node->parent = childIdx;
+  }
+}
+
+/**
+ * @private
+ */
+bool _visitNodeHT(hashTree *pHT, size_t nodeIndex,
+                  bool visit(hashEntry *entry, size_t nodeIndex, void *ref),
+                  void *ref) {
+  hashEntry *node = _getIndexNodeHT(pHT, nodeIndex);
+  bool cont = true;
+
+  if (node->left != -1) {
+    cont = _visitNodeHT(pHT, node->left, visit, ref);
+  }
+  if (node->right != -1 && cont) {
+    cont = _visitNodeHT(pHT, node->right, visit, ref);
+  }
+
+  if (cont) {
+    cont = visit(node, nodeIndex, ref);
+  }
+
+  return cont;
+}
+
+/////////////////////////////////
+// Exposed methods
+/////////////////////////////////
+
+unsigned int maxDepthHT(hashTree *pHT, size_t nodeIndex) {
+  unsigned int left = 0, right = 0, depth = 0;
+
+  if (nodeIndex < pHT->da->size) {
+    hashEntry *entry = _getIndexNodeHT(pHT, nodeIndex);
+    if (entry->left != -1) {
+      left = maxDepthHT(pHT, entry->left);
+    }
+    if (entry->right != -1) {
+      right = maxDepthHT(pHT, entry->right);
+    }
+
+    depth = 1 + ((left > right) ? left : right);
+  }
+
+  return depth;
+}
+
+void balanceHT(hashTree *pHT) { _balanceNodeHT(pHT, pHT->root, 0); }
+
 hashEntry *getHT(hashTree *pHT, void *key, size_t keyLength) {
   hashEntry entry = (hashEntry){.key = key,
                                 .value = NULL,
@@ -214,6 +320,12 @@ hashEntry *getHT(hashTree *pHT, void *key, size_t keyLength) {
                                 .right = -1};
 
   return _findNodeHT(pHT, &entry, pHT->root);
+}
+
+void visitNodesHT(hashTree *pHT,
+                  bool visit(hashEntry *entry, size_t entryIndex, void *ref),
+                  void *ref) {
+  _visitNodeHT(pHT, pHT->root, visit, ref);
 }
 
 hashTree *createHT(int compare(const void *a, const void *b),

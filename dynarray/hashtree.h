@@ -10,7 +10,6 @@
  * @brief Dynamic Array header file
  *
  * TODO:
- * - balance tree
  * - remove node
  * - generate a set from a hash tree
  */
@@ -82,7 +81,7 @@ void addHT(hashTree *pHT, void *key, size_t keyLength, void *value);
  * @param nodeIndex the node index to count from
  * @return the max tree depth from the node
  */
-int maxDepthHT(hashTree *pHT, size_t nodeIndex);
+unsigned int maxDepthHT(hashTree *pHT, size_t nodeIndex);
 
 /**
  * @brief Draw the sub node
@@ -92,7 +91,6 @@ int maxDepthHT(hashTree *pHT, size_t nodeIndex);
  */
 void drawNode(hashTree *pHT, size_t nodeIdx, FILE *file);
 
-
 /**
  * @brief Find a node in the tree
  * @param pHT the hash tree pointer to search
@@ -101,6 +99,26 @@ void drawNode(hashTree *pHT, size_t nodeIdx, FILE *file);
  * @return the found entry or NULL if not found
  */
 hashEntry *getHT(hashTree *pHT, void *key, size_t keyLength);
+
+/**
+ * @brief Balance the tree
+ * @param pHT the has tree pointer to balance
+ */
+void balanceHT(hashTree *pHT);
+
+/**
+ * @brief Vist each node in the tree in a depth first path, from left to right
+ *
+ * If the visitor method returns false then the
+ * tree traversal will stop.
+ *
+ * @param pHT the hash tree pointer to visit
+ * @param visit the function to call for each node
+ * @param ref optional value to pass to visit method, maybe NULL
+ */
+void visitNodesHT(hashTree *pHT,
+                  bool visit(hashEntry *entry, size_t entryIndex, void *ref),
+                  void *ref);
 
 /**
  * @brief Free a hash tree
