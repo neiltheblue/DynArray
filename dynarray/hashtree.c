@@ -368,8 +368,28 @@ void _deleteHT(hashTree *pHT, hashEntry *entry, size_t nodeIndex) {
 
     _reinsertHT(pHT, delNode->left);
     _reinsertHT(pHT, delNode->right);
-	
-	
+
+    size_t lastIndex = pHT->da->size - 1;
+    if (lastIndex > 0) {
+      hashEntry *lastNode = _getIndexNodeHT(pHT, lastIndex);
+      hashEntry *lastParent = _getIndexNodeHT(pHT, lastNode->parent);
+      memcpy(delNode, lastNode, pHT->da->elementSize);
+      lastParent->left =
+          (lastParent->left == lastIndex) ? found : lastParent->left;
+      lastParent->right =
+          (lastParent->right == lastIndex) ? found : lastParent->right;
+      if (pHT->root == lastIndex) {
+        pHT->root = found;
+      }
+      hashEntry *foundNode = _getIndexNodeHT(pHT, found);
+      if (foundNode->left != -1) {
+        _getIndexNodeHT(pHT, foundNode->left)->parent = found;
+      }
+      if (foundNode->right != -1) {
+        _getIndexNodeHT(pHT, foundNode->right)->parent = found;
+      }
+    }
+    pHT->da->size--;
   }
 }
 

@@ -360,7 +360,7 @@ void test_delete(void **state) {
   deleteHT(pHT, keys[idx], strlen(keys[idx]));
   visitNodesHT(pHT, checkParent, NULL);
   assert_true(getHT(pHT, keys[idx], strlen(keys[idx])) == NULL);
-  //  assert_int_equal(pHT->da->size, count-1);
+  assert_int_equal(pHT->da->size, count - 1);
 
   // delete branch
   idx = 4;
@@ -370,7 +370,7 @@ void test_delete(void **state) {
   assert_true(getHT(pHT, keys[6], strlen(keys[6])) != NULL);
   assert_true(getHT(pHT, keys[8], strlen(keys[8])) != NULL);
   assert_true(getHT(pHT, keys[5], strlen(keys[5])) != NULL);
-  //  assert_int_equal(pHT->da->size, count-2);
+  assert_int_equal(pHT->da->size, count - 2);
 
   // delete root
   idx = 0;
@@ -384,25 +384,29 @@ void test_delete(void **state) {
   assert_true(getHT(pHT, keys[6], strlen(keys[6])) != NULL);
   assert_true(getHT(pHT, keys[8], strlen(keys[8])) != NULL);
   assert_true(getHT(pHT, keys[5], strlen(keys[5])) != NULL);
-  //  assert_int_equal(pHT->da->size, count-3);
+  assert_int_equal(pHT->da->size, count - 3);
 
   // delete rest
   int rest[] = {1, 3, 2, 9, 6, 8, 5};
   for (int i = 0; i < 7; i++) {
     idx = rest[i];
-    printf("Delete index: %d\n", idx);
-    printTree(pHT);
     deleteHT(pHT, keys[idx], strlen(keys[idx]));
-    printTree(pHT);
     visitNodesHT(pHT, checkParent, NULL);
     assert_true(getHT(pHT, keys[idx], strlen(keys[idx])) == NULL);
     for (int j = i + 1; j < 7; j++) {
       assert_true(getHT(pHT, keys[rest[j]], strlen(keys[rest[j]])) != NULL);
     }
-    //  assert_int_equal(pHT->da->size, count-4-i);
+    assert_int_equal(pHT->da->size, count - 4 - i);
   }
 
-  assert_true(false /*not completed until tree size reduced*/);
+  assert_int_equal(pHT->da->size, 0);
+
+  // re-add
+  for (int i = 0; i < count; i++) {
+    addHT(pHT, keys[i], strlen(keys[i]), values[i]);
+  }
+  visitNodesHT(pHT, checkParent, NULL);
+  assert_int_equal(pHT->da->size, count);
 }
 
 int setupHT(void **state) {
