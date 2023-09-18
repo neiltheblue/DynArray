@@ -247,4 +247,14 @@ void *_safeCalloc(const size_t count, const size_t size);
  */
 void *_safeReallocarray(void *ptr, const size_t count, const size_t size);
 
+/**
+ * @private
+ */
+void _swap(dynArray *pDA, void *a, void *b);
+
+/**
+ * @private
+ */
+void *_toPtr(dynArray *pDA, size_t index);
+
 #endif

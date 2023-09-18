@@ -77,8 +77,9 @@ uint32_t hash(const void *input, size_t length, uint32_t seed) {
 /**
  * @private
  */
-static inline int _compareHashElement(hashTree *pHD, hashEntry *entry,
-                                      hashEntry *node) {
+static inline int _compareHashElement(const hashTree *pHD,
+                                      const hashEntry *entry,
+                                      const hashEntry *node) {
 
   int comp = entry->hash < node->hash ? -1 : entry->hash > node->hash ? 1 : 0;
 
@@ -92,14 +93,16 @@ static inline int _compareHashElement(hashTree *pHD, hashEntry *entry,
 /**
  * @private
  */
-static inline hashEntry *_getIndexNodeHT(hashTree *pHT, size_t nodeIndex) {
+static inline hashEntry *_getIndexNodeHT(const hashTree *pHT,
+                                         const size_t nodeIndex) {
   return getDA(pHT->da, nodeIndex);
 }
 
 /**
  * @private
  */
-static inline hashEntry *_getRootNodeHT(hashTree *pHT, size_t nodeIndex) {
+static inline hashEntry *_getRootNodeHT(const hashTree *pHT,
+                                        const size_t nodeIndex) {
   return _getIndexNodeHT(pHT, pHT->root);
 }
 
@@ -138,15 +141,6 @@ void _drawNode(hashTree *pHT, size_t nodeIdx, char *topPrefix, char *botPrefix,
   }
 }
 
-void drawNode(hashTree *pHT, size_t nodeIdx, FILE *file) {
-  if (file == NULL) {
-    file = stdout;
-  }
-  fprintf(file, "\n");
-  _drawNode(pHT, pHT->root, "", "", file);
-  fprintf(file, "\n");
-}
-
 /**
  * @private
  */
@@ -183,18 +177,45 @@ void _addToNodeHT(hashTree *pHT, hashEntry *entry, size_t nodeIndex) {
 /**
  * @private
  */
-hashEntry *_findNodeHT(hashTree *pHT, hashEntry *entry, size_t nodeIndex) {
+hashEntry *_findNodeHT(hashTree *pHT, const hashEntry *entry,
+                       const size_t nodeIndex) {
+  hashEntry *node = NULL;
+
+  if (nodeIndex != -1) {
+    node = _getIndexNodeHT(pHT, nodeIndex);
+    int comp = _compareHashElement(pHT, entry, node);
+
+    if (comp < 0) {
+      node = (node->left != -1) ? _findNodeHT(pHT, entry, node->left) : NULL;
+    } else if (comp > 0) {
+      node = (node->right != -1) ? _findNodeHT(pHT, entry, node->right) : NULL;
+    }
+    // key matches node so return node
+  }
+
+  return node;
+}
+
+/**
+ * @private
+ */
+size_t _findNodeIndexHT(hashTree *pHT, const hashEntry *entry,
+                        const size_t nodeIndex) {
+  size_t found = -1;
   hashEntry *node = _getIndexNodeHT(pHT, nodeIndex);
   int comp = _compareHashElement(pHT, entry, node);
 
-  if (comp < 0) {
-    node = (node->left != -1) ? _findNodeHT(pHT, entry, node->left) : NULL;
+  if (comp == 0) {
+    found = nodeIndex;
+  } else if (comp < 0) {
+    found = (node->left != -1) ? _findNodeIndexHT(pHT, entry, node->left) : -1;
   } else if (comp > 0) {
-    node = (node->right != -1) ? _findNodeHT(pHT, entry, node->right) : NULL;
+    found =
+        (node->right != -1) ? _findNodeIndexHT(pHT, entry, node->right) : -1;
   }
   // key matches node so return node
 
-  return node;
+  return found;
 }
 
 /**
@@ -271,26 +292,99 @@ void _balanceNodeHT(hashTree *pHT, size_t nodeIndex, int side) {
 bool _visitNodeHT(hashTree *pHT, size_t nodeIndex,
                   bool visit(hashEntry *entry, size_t nodeIndex, void *ref),
                   void *ref) {
-  hashEntry *node = _getIndexNodeHT(pHT, nodeIndex);
   bool cont = true;
+  if (nodeIndex != -1) {
+    hashEntry *node = _getIndexNodeHT(pHT, nodeIndex);
 
-  if (node->left != -1) {
-    cont = _visitNodeHT(pHT, node->left, visit, ref);
-  }
-  if (node->right != -1 && cont) {
-    cont = _visitNodeHT(pHT, node->right, visit, ref);
-  }
+    if (node->left != -1) {
+      cont = _visitNodeHT(pHT, node->left, visit, ref);
+    }
+    if (node->right != -1 && cont) {
+      cont = _visitNodeHT(pHT, node->right, visit, ref);
+    }
 
-  if (cont) {
-    cont = visit(node, nodeIndex, ref);
+    if (cont) {
+      cont = visit(node, nodeIndex, ref);
+    }
   }
 
   return cont;
 }
 
+/**
+ * @private
+ */
+void _insertNodeHT(hashTree *pHT, hashEntry *entry, size_t entryIndex,
+                   size_t nodeIndex) {
+
+  hashEntry *node = _getIndexNodeHT(pHT, nodeIndex);
+  int comp = _compareHashElement(pHT, entry, node);
+
+  if (comp < 0) {
+    if (node->left == -1) {
+      node->left = entryIndex;
+      entry->parent = nodeIndex;
+    } else {
+      _insertNodeHT(pHT, entry, entryIndex, node->left);
+    }
+  } else if (comp > 0) {
+    if (node->right == -1) {
+      node->right = entryIndex;
+      entry->parent = nodeIndex;
+    } else {
+      _insertNodeHT(pHT, entry, entryIndex, node->right);
+    }
+  }
+}
+
+/**
+ * @private
+ */
+void _reinsertHT(hashTree *pHT, size_t entryIndex) {
+  if (entryIndex != -1) {
+    hashEntry *entry = _getIndexNodeHT(pHT, entryIndex);
+    _insertNodeHT(pHT, entry, entryIndex, pHT->root);
+  }
+}
+
+/**
+ * @private
+ */
+void _deleteHT(hashTree *pHT, hashEntry *entry, size_t nodeIndex) {
+
+  size_t found = _findNodeIndexHT(pHT, entry, pHT->root);
+
+  if (found != -1) {
+    hashEntry *delNode = _getIndexNodeHT(pHT, found);
+
+    if (pHT->root != found) {
+      hashEntry *parent = _getIndexNodeHT(pHT, delNode->parent);
+
+      parent->left = (parent->left == found) ? -1 : parent->left;
+      parent->right = (parent->right == found) ? -1 : parent->right;
+    } else {
+      pHT->root = (delNode->left != -1) ? delNode->left : delNode->right;
+    }
+
+    _reinsertHT(pHT, delNode->left);
+    _reinsertHT(pHT, delNode->right);
+	
+	
+  }
+}
+
 /////////////////////////////////
 // Exposed methods
 /////////////////////////////////
+
+void deleteHT(hashTree *pHT, void *key, size_t keyLength) {
+  hashEntry entry = (hashEntry){.key = key,
+                                .value = NULL,
+                                .hash = hash(key, keyLength, 0),
+                                .left = -1,
+                                .right = -1};
+  _deleteHT(pHT, &entry, pHT->root);
+}
 
 unsigned int maxDepthHT(hashTree *pHT, size_t nodeIndex) {
   unsigned int left = 0, right = 0, depth = 0;
@@ -362,6 +456,18 @@ void addHT(hashTree *pHT, void *key, size_t keyLength, void *value) {
     // update the root node
     _addToNodeHT(pHT, &entry, pHT->root);
   }
+}
+
+void drawNode(hashTree *pHT, size_t nodeIdx, FILE *file) {
+
+  if (file == NULL) {
+    file = stdout;
+  }
+  if (pHT->da->size > 0 && pHT->root != -1) {
+    fprintf(file, "\n");
+    _drawNode(pHT, pHT->root, "", "", file);
+  }
+  fprintf(file, "\n");
 }
 
 void freeHT(hashTree *pHT) {

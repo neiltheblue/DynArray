@@ -16,6 +16,12 @@ void makeKeyValues(int count, char keys[][100], char values[][100]) {
   }
 }
 
+hashEntry *getIndexNodeHT(size_t nodeIndex) {
+  return getDA(pHT->da, nodeIndex);
+}
+
+void printTree(hashTree *pHT) { drawNode(pHT, pHT->root, NULL); }
+
 void test_hash(void **state) {
   char *input = "this is my test key that needs to be longer than 32 chars";
   int len = strlen(input);
@@ -211,6 +217,23 @@ bool checkBalance(hashEntry *entry, size_t entryIndex, void *ref) {
   return true;
 }
 
+bool checkParent(hashEntry *entry, size_t entryIndex, void *ref) {
+
+  if (entry->left != -1) {
+    assert_true(((hashEntry *)getDA(pHT->da, entry->left))->hash < entry->hash);
+    assert_int_equal(((hashEntry *)getDA(pHT->da, entry->left))->parent,
+                     entryIndex);
+  }
+  if (entry->right != -1) {
+    assert_true(((hashEntry *)getDA(pHT->da, entry->right))->hash >
+                entry->hash);
+    assert_int_equal(((hashEntry *)getDA(pHT->da, entry->right))->parent,
+                     entryIndex);
+  }
+
+  return true;
+}
+
 void test_balanceNone(void **state) {
   int count = 10;
   char keys[count][buffer];
@@ -313,6 +336,75 @@ void test_balanceRootLeft(void **state) {
   visitNodesHT(pHT, checkBalance, NULL);
 }
 
+void test_delete(void **state) {
+  int count = 10;
+  char keys[count][buffer];
+  char values[count][buffer];
+  pHT = createHT(compareString, NULL);
+  makeKeyValues(count, keys, values);
+
+  for (int i = 0; i < count; i++) {
+    addHT(pHT, keys[i], strlen(keys[i]), values[i]);
+  }
+  visitNodesHT(pHT, checkParent, NULL);
+  assert_int_equal(pHT->da->size, count);
+
+  // delete none
+  deleteHT(pHT, "x", strlen("x"));
+  visitNodesHT(pHT, checkParent, NULL);
+  assert_int_equal(pHT->da->size, count);
+
+  // delete leaf
+  int idx;
+  idx = 7;
+  deleteHT(pHT, keys[idx], strlen(keys[idx]));
+  visitNodesHT(pHT, checkParent, NULL);
+  assert_true(getHT(pHT, keys[idx], strlen(keys[idx])) == NULL);
+  //  assert_int_equal(pHT->da->size, count-1);
+
+  // delete branch
+  idx = 4;
+  deleteHT(pHT, keys[idx], strlen(keys[idx]));
+  visitNodesHT(pHT, checkParent, NULL);
+  assert_true(getHT(pHT, keys[idx], strlen(keys[idx])) == NULL);
+  assert_true(getHT(pHT, keys[6], strlen(keys[6])) != NULL);
+  assert_true(getHT(pHT, keys[8], strlen(keys[8])) != NULL);
+  assert_true(getHT(pHT, keys[5], strlen(keys[5])) != NULL);
+  //  assert_int_equal(pHT->da->size, count-2);
+
+  // delete root
+  idx = 0;
+  deleteHT(pHT, keys[idx], strlen(keys[idx]));
+  visitNodesHT(pHT, checkParent, NULL);
+  assert_true(getHT(pHT, keys[idx], strlen(keys[idx])) == NULL);
+  assert_true(getHT(pHT, keys[1], strlen(keys[1])) != NULL);
+  assert_true(getHT(pHT, keys[3], strlen(keys[3])) != NULL);
+  assert_true(getHT(pHT, keys[2], strlen(keys[2])) != NULL);
+  assert_true(getHT(pHT, keys[9], strlen(keys[9])) != NULL);
+  assert_true(getHT(pHT, keys[6], strlen(keys[6])) != NULL);
+  assert_true(getHT(pHT, keys[8], strlen(keys[8])) != NULL);
+  assert_true(getHT(pHT, keys[5], strlen(keys[5])) != NULL);
+  //  assert_int_equal(pHT->da->size, count-3);
+
+  // delete rest
+  int rest[] = {1, 3, 2, 9, 6, 8, 5};
+  for (int i = 0; i < 7; i++) {
+    idx = rest[i];
+    printf("Delete index: %d\n", idx);
+    printTree(pHT);
+    deleteHT(pHT, keys[idx], strlen(keys[idx]));
+    printTree(pHT);
+    visitNodesHT(pHT, checkParent, NULL);
+    assert_true(getHT(pHT, keys[idx], strlen(keys[idx])) == NULL);
+    for (int j = i + 1; j < 7; j++) {
+      assert_true(getHT(pHT, keys[rest[j]], strlen(keys[rest[j]])) != NULL);
+    }
+    //  assert_int_equal(pHT->da->size, count-4-i);
+  }
+
+  assert_true(false /*not completed until tree size reduced*/);
+}
+
 int setupHT(void **state) {
 
   pHT = NULL;
@@ -347,6 +439,7 @@ int test_tree(void) {
       cmocka_unit_test_setup_teardown(test_balanceRootLeft, setupHT,
                                       teardownHT),
       cmocka_unit_test_setup_teardown(test_vist, setupHT, teardownHT),
+      cmocka_unit_test_setup_teardown(test_delete, setupHT, teardownHT),
 
   };
 

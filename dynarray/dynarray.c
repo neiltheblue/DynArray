@@ -55,7 +55,7 @@ bool _extendCapacityDA(dynArray *pDA) {
 /**
  * @private
  */
-static inline void _swap(dynArray *pDA, void *a, void *b) {
+void _swap(dynArray *pDA, void *a, void *b) {
   if (a != b) {
     memcpy(pDA->temp, a, pDA->elementSize);
     memcpy(a, b, pDA->elementSize);
@@ -66,7 +66,7 @@ static inline void _swap(dynArray *pDA, void *a, void *b) {
 /**
  * @private
  */
-static inline void *_toPtr(dynArray *pDA, size_t index) {
+void *_toPtr(dynArray *pDA, size_t index) {
   return pDA->array + (index * pDA->elementSize);
 }
 

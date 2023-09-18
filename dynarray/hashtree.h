@@ -11,6 +11,9 @@
  *
  * TODO:
  * - remove node
+ * - review cont params
+ * - make helper sruct for entry search and delete to avoid needing 2 arguments
+ * - make helper function to create string entry for search
  * - generate a set from a hash tree
  */
 
@@ -91,6 +94,7 @@ unsigned int maxDepthHT(hashTree *pHT, size_t nodeIndex);
  */
 void drawNode(hashTree *pHT, size_t nodeIdx, FILE *file);
 
+
 /**
  * @brief Find a node in the tree
  * @param pHT the hash tree pointer to search
@@ -119,6 +123,16 @@ void balanceHT(hashTree *pHT);
 void visitNodesHT(hashTree *pHT,
                   bool visit(hashEntry *entry, size_t entryIndex, void *ref),
                   void *ref);
+
+
+/**
+ * @brief Delete a node from the tree
+ * @param pHT the hash tree pointer to delete from
+ * @param key the key to delete
+ * @param keyLength the key length
+  */
+void deleteHT(hashTree *pHT, void *key, size_t keyLength);
+
 
 /**
  * @brief Free a hash tree
