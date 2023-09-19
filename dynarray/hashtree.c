@@ -19,13 +19,13 @@ static inline uint32_t _rotateLeft(const uint32_t x, const uint8_t bits) {
 /**
  * @private
  */
-static inline void _process(const void *data, uint32_t state0, uint32_t state1,
-                             uint32_t state2,  uint32_t state3) {
+static inline void _process(const void *data, uint32_t *state0, uint32_t *state1,
+                             uint32_t *state2,  uint32_t *state3) {
   const uint32_t *block = (const uint32_t *)data;
-  state0 = _rotateLeft(state0 + block[0] * Prime2, 13) * Prime1;
-  state1 = _rotateLeft(state1 + block[1] * Prime2, 13) * Prime1;
-  state2 = _rotateLeft(state2 + block[2] * Prime2, 13) * Prime1;
-  state3 = _rotateLeft(state3 + block[3] * Prime2, 13) * Prime1;
+  *state0 = _rotateLeft(*state0 + block[0] * Prime2, 13) * Prime1;
+  *state1 = _rotateLeft(*state1 + block[1] * Prime2, 13) * Prime1;
+  *state2 = _rotateLeft(*state2 + block[2] * Prime2, 13) * Prime1;
+  *state3 = _rotateLeft(*state3 + block[3] * Prime2, 13) * Prime1;
 }
 
 uint32_t hash(const void *input, const size_t length, const uint32_t seed) {
@@ -42,7 +42,7 @@ uint32_t hash(const void *input, const size_t length, const uint32_t seed) {
   const uint8_t *stopBlock = stop - MaxBufferSize;
 
   while (data <= stopBlock) {
-    _process(data, state0, state1, state2, state3);
+    _process(data, &state0, &state1, &state2, &state3);
     data += 16;
   }
 

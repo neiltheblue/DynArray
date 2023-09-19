@@ -27,10 +27,10 @@ void test_hash(void **state) {
   int len = strlen(input);
 
   uint32_t h = hash(input, len, 0);
-  assert_int_equal(h, 3685744406);
+  assert_int_equal(h, 1770453680);
 
   h = hash(input, len, 1);
-  assert_int_equal(h, 3849301065);
+  assert_int_equal(h, 4058936515);
 }
 
 void test_addFirstLevelHT(void **state) {
@@ -173,7 +173,7 @@ void test_getNode(void **state) {
   assert_null(found);
 }
 
-bool visit_test(hashEntry *entry, size_t entryIndex, void *ref) {
+bool visit_test(const hashEntry *entry, const size_t entryIndex, void *ref) {
   int *counter = (int *)ref;
   (*counter)++;
   return true;
@@ -195,7 +195,7 @@ void test_vist(void **state) {
   assert_int_equal(counter, count);
 }
 
-bool checkBalance(hashEntry *entry, size_t entryIndex, void *ref) {
+bool checkBalance(const hashEntry *entry, const size_t entryIndex, void *ref) {
 
   int left = maxDepthHT(pHT, entry->left);
   int right = maxDepthHT(pHT, entry->right);
@@ -217,7 +217,7 @@ bool checkBalance(hashEntry *entry, size_t entryIndex, void *ref) {
   return true;
 }
 
-bool checkParent(hashEntry *entry, size_t entryIndex, void *ref) {
+bool checkParent(const hashEntry *entry, const size_t entryIndex, void *ref) {
 
   if (entry->left != -1) {
     assert_true(((hashEntry *)getDA(pHT->da, entry->left))->hash < entry->hash);
