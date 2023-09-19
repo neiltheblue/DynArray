@@ -10,8 +10,7 @@
  * @brief Dynamic Array header file
  *
  * TODO:
- * - remove node
- * - review cont params
+ * - check if hash process is pass by value and not being updated!!!
  * - make helper sruct for entry search and delete to avoid needing 2 arguments
  * - make helper function to create string entry for search
  * - generate a set from a hash tree
@@ -21,8 +20,8 @@
  * @brief A key/value entity
  */
 typedef struct HashEntry {
-  uint32_t hash; ///< the hash
-  void *key;     ///< the key
+  const uint32_t hash; ///< the hash
+  const void *key;     ///< the key
   void *value;   ///< the value
   size_t parent; ///< the parent node
   size_t left;   ///< the smaller left node
@@ -76,7 +75,7 @@ hashTree *createHT(int compare(const void *a, const void *b),
  * @param keyLength the key length
  * @param value the value pointer
  */
-void addHT(hashTree *pHT, void *key, size_t keyLength, void *value);
+void addHT(hashTree *pHT, const void *key, const size_t keyLength, void *value);
 
 /**
  * @brief Get the tree depth of the sub-tree
@@ -84,7 +83,7 @@ void addHT(hashTree *pHT, void *key, size_t keyLength, void *value);
  * @param nodeIndex the node index to count from
  * @return the max tree depth from the node
  */
-unsigned int maxDepthHT(hashTree *pHT, size_t nodeIndex);
+unsigned int maxDepthHT(const hashTree *pHT, const size_t nodeIndex);
 
 /**
  * @brief Draw the sub node
@@ -92,8 +91,14 @@ unsigned int maxDepthHT(hashTree *pHT, size_t nodeIndex);
  * @param file the stream to write to or stdout if NULL
  * @param nodeIdx the node index to draw from
  */
-void drawNode(hashTree *pHT, size_t nodeIdx, FILE *file);
+void drawNode(const hashTree *pHT, const size_t nodeIdx, FILE *file);
 
+/**
+ * @brief Draw the tree
+ * @param pHT the hash tree pointer
+ * @param file the stream to write to or stdout if NULL
+ */
+void drawTree(const hashTree *pHT, FILE *file);
 
 /**
  * @brief Find a node in the tree
@@ -102,7 +107,7 @@ void drawNode(hashTree *pHT, size_t nodeIdx, FILE *file);
  * @param keyLength the key length
  * @return the found entry or NULL if not found
  */
-hashEntry *getHT(hashTree *pHT, void *key, size_t keyLength);
+hashEntry *getHT(const hashTree *pHT, const void *key, const size_t keyLength);
 
 /**
  * @brief Balance the tree
@@ -120,8 +125,8 @@ void balanceHT(hashTree *pHT);
  * @param visit the function to call for each node
  * @param ref optional value to pass to visit method, maybe NULL
  */
-void visitNodesHT(hashTree *pHT,
-                  bool visit(hashEntry *entry, size_t entryIndex, void *ref),
+void visitNodesHT(const hashTree *pHT,
+                  bool visit(const hashEntry *entry, const size_t entryIndex, void *ref),
                   void *ref);
 
 
@@ -131,7 +136,7 @@ void visitNodesHT(hashTree *pHT,
  * @param key the key to delete
  * @param keyLength the key length
   */
-void deleteHT(hashTree *pHT, void *key, size_t keyLength);
+void deleteHT(hashTree *pHT, const void *key, const size_t keyLength);
 
 
 /**

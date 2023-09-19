@@ -66,7 +66,7 @@ void _swap(dynArray *pDA, void *a, void *b) {
 /**
  * @private
  */
-void *_toPtr(dynArray *pDA, size_t index) {
+void *_toPtr(const dynArray *pDA, const size_t index) {
   return pDA->array + (index * pDA->elementSize);
 }
 
@@ -93,7 +93,7 @@ size_t _partition(dynArray *pDA, size_t low, size_t high,
 /**
  * @private
  */
-void _quickSort(dynArray *pDA, size_t low, size_t high,
+void _quickSort(dynArray *pDA, const size_t low, const size_t high,
                 int compare(const void *a, const void *b)) {
   if (low < high) {
 
@@ -109,44 +109,43 @@ void _quickSort(dynArray *pDA, size_t low, size_t high,
 /**
  * @private
  */
-bool _binarySearch(dynArray *pDA, int compare(const void *a, const void *b),
-                   void *value, size_t *index, size_t min, size_t max) {
-  bool found = false;
+size_t _binarySearch(const dynArray *pDA,
+                     int compare(const void *a, const void *b),
+                     const void *value, const size_t min, const size_t max) {
+  size_t found = -1;
   size_t diff = max - min;
 
   if (diff == 0) {
     if (compare(value, _toPtr(pDA, min)) == 0) {
-      found = true;
-      *index = min;
+      found = min;
     }
   } else {
     size_t mid = min + (diff / 2);
     int result = compare(value, _toPtr(pDA, mid));
     if (result == 0) {
-      found = true;
-      *index = mid;
+      found = mid;
     } else if (result == -1) {
-      found = _binarySearch(pDA, compare, value, index, min, mid);
+      found = _binarySearch(pDA, compare, value, min, mid);
     } else {
-      found = _binarySearch(pDA, compare, value, index, mid + 1, max);
+      found = _binarySearch(pDA, compare, value, mid + 1, max);
     }
   }
 
   return found;
 }
 
-bool searchDA(dynArray *pDA, void *value, size_t *index,
-              int compare(const void *a, const void *b)) {
-  bool found = false;
+size_t searchDA(dynArray *pDA, const void *value,
+                int compare(const void *a, const void *b)) {
+  size_t found = -1;
   if (pDA->size > 0) {
     sortDA(pDA, compare);
-    found = _binarySearch(pDA, compare ? compare : pDA->compare, value, index,
-                          0, pDA->size - 1);
+    found = _binarySearch(pDA, compare ? compare : pDA->compare, value, 0,
+                          pDA->size - 1);
   }
   return found;
 }
 
-dynArray *createDA(size_t elementSize,
+dynArray *createDA(const size_t elementSize,
                    int compare(const void *a, const void *b),
                    dynArrayParams *params) {
   dynArray *pDA;
@@ -177,7 +176,7 @@ void sortDA(dynArray *pDA, int compare(const void *a, const void *b)) {
   _quickSort(pDA, 0, pDA->size - 1, compare ? compare : pDA->compare);
 }
 
-bool addAllDA(dynArray *pDA, const void *src, size_t length) {
+bool addAllDA(dynArray *pDA, const void *src, const size_t length) {
   bool added = false;
   if (pDA->parent == NULL) {
     size_t lastIndex = pDA->size;
@@ -243,7 +242,7 @@ void reduceMemDA(dynArray *pDA) {
   }
 }
 
-dynArray *copyDA(dynArray *pDA) {
+dynArray *copyDA(const dynArray *pDA) {
   dynArray *copy =
       createDA(pDA->elementSize, pDA->compare,
                &(dynArrayParams){.size = pDA->size, .growth = pDA->growth});
@@ -251,7 +250,7 @@ dynArray *copyDA(dynArray *pDA) {
   return copy;
 }
 
-dynArray *subDA(dynArray *pDA, size_t min, size_t max) {
+dynArray *subDA(dynArray *pDA, const size_t min, const size_t max) {
   dynArray *sub = NULL;
   if (max > min && max < pDA->size) {
     size_t subSize = max - min + 1;

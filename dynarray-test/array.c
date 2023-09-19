@@ -274,57 +274,44 @@ void test_copy(void **state) {
 void test_binSearch(void **state) {
   pDALng = createDA(sizeof(long), compareDAlong, NULL);
   long value;
-  long *read;
-  size_t index;
-  assert_int_equal(searchDA(pDALng, &value, &index, NULL), false);
+  assert_int_equal(searchDA(pDALng, &value, NULL), -1);
 
   value = 10;
   addDA(pDALng, &value);
   value = 9;
-  assert_int_equal(searchDA(pDALng, &value, &index, compareDAlong), false);
+  assert_int_equal(searchDA(pDALng, &value, compareDAlong), -1);
 
   value = 10;
-  assert_int_equal(searchDA(pDALng, &value, &index, NULL), true);
-  assert_int_equal(index, 0);
+  assert_int_equal(searchDA(pDALng, &value, NULL), 0);
 
   value = 11;
   addDA(pDALng, &value);
   value = 9;
-  assert_int_equal(searchDA(pDALng, &value, &index, NULL), false);
+  assert_int_equal(searchDA(pDALng, &value, NULL), -1);
 
   value = 10;
-  assert_int_equal(searchDA(pDALng, &value, &index, NULL), true);
-  assert_int_equal(index, 0);
+  assert_int_equal(searchDA(pDALng, &value, NULL), 0);
 
   value = 11;
-  assert_int_equal(searchDA(pDALng, &value, &index, NULL), true);
-  assert_int_equal(index, 1);
+  assert_int_equal(searchDA(pDALng, &value, NULL), 1);
 
   long arr[] = {0, 0, 1, 2, 6, 6, 7, 8, 9};
   addAllDA(pDALng, arr, 9);
 
   value = 7;
-  assert_int_equal(searchDA(pDALng, &value, &index, compareDAlong), true);
-  read = getDA(pDALng, index);
-  assert_int_equal(*read, 7);
+  assert_int_equal(searchDA(pDALng, &value, compareDAlong), 6);
 
   value = 6;
-  assert_int_equal(searchDA(pDALng, &value, &index, compareDAlong), true);
-  read = getDA(pDALng, index);
-  assert_int_equal(*read, 6);
+  assert_int_equal(searchDA(pDALng, &value, compareDAlong), 5);
 
   value = 0;
-  assert_int_equal(searchDA(pDALng, &value, &index, compareDAlong), true);
-  read = getDA(pDALng, index);
-  assert_int_equal(*read, 0);
+  assert_int_equal(searchDA(pDALng, &value, compareDAlong), 1);
 
   value = 11;
-  assert_int_equal(searchDA(pDALng, &value, &index, NULL), true);
-  read = getDA(pDALng, index);
-  assert_int_equal(*read, 11);
+  assert_int_equal(searchDA(pDALng, &value, NULL), 10);
 
   value = 12;
-  assert_int_equal(searchDA(pDALng, &value, &index, NULL), false);
+  assert_int_equal(searchDA(pDALng, &value, NULL), -1);
 }
 
 void test_appendDA(void **state) {

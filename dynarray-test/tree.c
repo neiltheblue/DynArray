@@ -20,7 +20,7 @@ hashEntry *getIndexNodeHT(size_t nodeIndex) {
   return getDA(pHT->da, nodeIndex);
 }
 
-void printTree(hashTree *pHT) { drawNode(pHT, pHT->root, NULL); }
+void printTree(hashTree *pHT) { drawTree(pHT,  NULL); }
 
 void test_hash(void **state) {
   char *input = "this is my test key that needs to be longer than 32 chars";

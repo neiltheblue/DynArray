@@ -50,13 +50,13 @@
  * @brief Dynamic array entity
  */
 typedef struct DynamicArray {
-  size_t elementSize;          ///< the element size
-  size_t size;                 ///< the array size
-  size_t capacity;             ///< the array capacity
-  float growth;                ///< the array growth rate
-  void *array;                 ///< the array
-  void *temp;                  ///< the temp element store
-  struct DynamicArray *parent; ///< the parent array
+  size_t elementSize;                ///< the element size
+  size_t size;                       ///< the array size
+  size_t capacity;                   ///< the array capacity
+  float growth;                      ///< the array growth rate
+  void *array;                       ///< the array
+  void *temp;                        ///< the temp element store
+  const struct DynamicArray *parent; ///< the parent array
   int (*compare)(const void *a,
                  const void *b); ///< the default comparator function
 } dynArray;
@@ -163,7 +163,7 @@ bool addAllDA(dynArray *pDA, const void *src, size_t length);
  * @param index the index to read
  * @return a pointer to the value or NULL if not found
  */
-void* getDA(const dynArray *pDA, const size_t index);
+void *getDA(const dynArray *pDA, const size_t index);
 
 /**
  * @brief Sort the array
@@ -186,7 +186,7 @@ void reverseDA(dynArray *pDA);
  * @param pDA the array pointer to copy
  * @return the copied array
  */
-dynArray *copyDA(dynArray *pDA);
+dynArray *copyDA(const dynArray *pDA);
 
 /**
  * @brief Perform a binary search for the value
@@ -195,11 +195,10 @@ dynArray *copyDA(dynArray *pDA);
  *
  * @param pDA the array pointer to search
  * @param value the value to search for
- * @param index the retuned index if found
  * @param compare the compare function  or NULL to use the default
- * @return 'true' if the value was found
+ * @return the index if the value was found, else -1
  */
-bool searchDA(dynArray *pDA, void *value, size_t *index,
+size_t searchDA(dynArray *pDA, const void *value, 
               int compare(const void *a, const void *b));
 
 /**
@@ -255,6 +254,6 @@ void _swap(dynArray *pDA, void *a, void *b);
 /**
  * @private
  */
-void *_toPtr(dynArray *pDA, size_t index);
+void *_toPtr(const dynArray *pDA, size_t index);
 
 #endif
