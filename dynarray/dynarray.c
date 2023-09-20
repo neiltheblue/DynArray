@@ -276,6 +276,12 @@ bool appendDA(dynArray *pDA, dynArray *pSrc) {
   return appended;
 }
 
+void clearDA(dynArray *pDA) {
+  if (pDA) {
+    pDA->size = 0;
+  }
+}
+
 void freeDA(dynArray *pDA) {
   if (pDA) {
     free(pDA->temp);

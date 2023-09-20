@@ -198,8 +198,8 @@ dynArray *copyDA(const dynArray *pDA);
  * @param compare the compare function  or NULL to use the default
  * @return the index if the value was found, else -1
  */
-size_t searchDA(dynArray *pDA, const void *value, 
-              int compare(const void *a, const void *b));
+size_t searchDA(dynArray *pDA, const void *value,
+                int compare(const void *a, const void *b));
 
 /**
  * @brief Create a sub array based on the parent array
@@ -235,6 +235,15 @@ bool appendDA(dynArray *pDA, dynArray *pSrc);
  * @return <0, 0 or >0 if a is less than, equal to or greater than b
  */
 int compareString(const void *a, const void *b);
+
+/**
+ * @brief Clear the content of the array
+ *
+ * This does not reclaim the memory used, to do that call reduceMemDA().
+ *
+ * @param pDA the array pointer to clear
+ */
+void clearDA(dynArray *pDA);
 
 /**
  * @private

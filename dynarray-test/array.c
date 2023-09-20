@@ -51,6 +51,29 @@ void test_addDA(void **state) {
   assert_int_equal(pDALng->size, max);
 }
 
+void test_clearDA(void **state) {
+  pDALng = createDA(sizeof(long), NULL, NULL);
+
+  size_t i, max = 18;
+  for (i = 0; i < max; i++) {
+    assert_int_equal(*(size_t *)(addDA(pDALng, &i)), i);
+  }
+
+  assert_int_equal(pDALng->capacity, 22);
+  assert_int_equal(pDALng->size, max);
+
+  clearDA(pDALng);
+  assert_int_equal(pDALng->capacity, 22);
+  assert_int_equal(pDALng->size, 0);
+
+  for (i = 0; i < max; i++) {
+    assert_int_equal(*(size_t *)(addDA(pDALng, &i)), i);
+  }
+
+  assert_int_equal(pDALng->capacity, 22);
+  assert_int_equal(pDALng->size, max);
+}
+
 void test_addAllDA(void **state) {
   pDALng = createDA(sizeof(long), NULL, NULL);
 
@@ -410,6 +433,7 @@ int test_array(void) {
       cmocka_unit_test_setup_teardown(test_binSearch, setupDA, teardownDA),
       cmocka_unit_test_setup_teardown(test_subDA, setupDA, teardownDA),
       cmocka_unit_test_setup_teardown(test_appendDA, setupDA, teardownDA),
+	  cmocka_unit_test_setup_teardown(test_clearDA, setupDA, teardownDA),	  
 #ifdef PERF
       cmocka_unit_test_setup_teardown(test_growing, setupDA, teardownDA),
 #endif // PERF

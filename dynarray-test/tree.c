@@ -425,6 +425,34 @@ void test_delete(void **state) {
   assert_int_equal(pHT->da->size, count);
 }
 
+void test_clear(void **state) {
+  int count = 1;
+  char keys[count][buffer];
+  keyEntry kEntry[count];
+  char values[count][buffer];
+  pHT = createHT(compareString, NULL);
+  makeKeyValues(count, keys, values, kEntry);
+
+  for (int i = 0; i < count; i++) {
+    addHT(pHT, &kEntry[i], values[i]);
+  }
+
+  assert_int_equal(pHT->da->size, count);
+  assert_int_equal(pHT->root, 0);
+
+  clearHT(pHT);
+
+  assert_int_equal(pHT->da->size, 0);
+  assert_int_equal(pHT->root, -1);
+
+  for (int i = 0; i < count; i++) {
+    addHT(pHT, &kEntry[i], values[i]);
+  }
+
+  assert_int_equal(pHT->da->size, count);
+  assert_int_equal(pHT->root, 0);
+}
+
 int setupHT(void **state) {
 
   pHT = NULL;
@@ -460,6 +488,7 @@ int test_tree(void) {
                                       teardownHT),
       cmocka_unit_test_setup_teardown(test_vist, setupHT, teardownHT),
       cmocka_unit_test_setup_teardown(test_delete, setupHT, teardownHT),
+	  cmocka_unit_test_setup_teardown(test_clear, setupHT, teardownHT),	  
 
   };
 

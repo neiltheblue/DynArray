@@ -462,6 +462,7 @@ hashTree *createHT(int compare(const void *a, const void *b),
       .size = 0, .growth = params->growth, .capacity = params->capacity};
 
   pHT->da = createDA(sizeof(hashEntry), compare, &daParams);
+  pHT->root = -1;
   return pHT;
 }
 
@@ -482,6 +483,13 @@ void addHT(hashTree *pHT, const keyEntry *kEntry, void *value) {
   } else {
     // update the root node
     _addToNodeHT(pHT, &entry, pHT->root);
+  }
+}
+
+void clearHT(hashTree *pHT) {
+  if (pHT) {
+    clearDA(pHT->da);
+    pHT->root = -1;
   }
 }
 

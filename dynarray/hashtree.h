@@ -11,6 +11,12 @@
  *
  * TODO:
  * - generate a set from a hash tree
+ * -- add has all function
+ * -- add add all function
+ * -- add get all function
+ * -- add delete all function
+ * -- add retain all function
+ * -- add union function
  */
 
 /**
@@ -26,11 +32,11 @@ typedef struct KeyEntry {
  */
 typedef struct HashEntry {
   const uint32_t hash;    ///< the hash
-  const keyEntry *kEntry; ///< the key
-  void *value;            ///< the value
+  const keyEntry *kEntry; ///< the key  
   size_t parent;          ///< the parent node
   size_t left;            ///< the smaller left node
   size_t right;           ///< the larger right node
+  void *value;            ///< the value
 } hashEntry;
 
 /**
@@ -151,6 +157,13 @@ void visitNodesHT(const hashTree *pHT,
  * @param kEntry the key entry to delete
  */
 void deleteHT(hashTree *pHT, const keyEntry *kEntry);
+
+
+/**
+ * @brief Clear the contents of the hash tree.
+ * @param pHT the hash tree pointer to clear
+ */
+void clearHT(hashTree *pHT);
 
 /**
  * @brief Free a hash tree
