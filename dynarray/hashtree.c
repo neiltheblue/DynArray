@@ -89,7 +89,7 @@ static inline int _compareHashElement(const hashTree *pHD,
   int comp = entry->hash < node->hash ? -1 : entry->hash > node->hash ? 1 : 0;
 
   if (comp == 0) {
-    comp = pHD->da->compare(entry->key, node->key);
+    comp = pHD->da->compare(entry->kEntry->key, node->kEntry->key);
   }
 
   return comp;
@@ -132,7 +132,7 @@ void _drawNode(const hashTree *pHT, const size_t nodeIdx, const char *topPrefix,
   fprintf(file, "%s  /\n", topPrefix);
 
   fprintf(file, "%s+%02lu[%02lu] %s [%u]\n", topPrefix, nodeIdx, entry->parent,
-          (char *)entry->key, entry->hash);
+          (char *)entry->kEntry->key, entry->hash);
   fprintf(file, "%s  \\\n", botPrefix);
 
   if (entry->left != -1) {
@@ -404,7 +404,7 @@ void _deleteHT(hashTree *pHT, hashEntry *entry, const size_t nodeIndex) {
 /////////////////////////////////
 
 void deleteHT(hashTree *pHT, const keyEntry *kEntry) {
-  hashEntry entry = (hashEntry){.key = kEntry->key,
+  hashEntry entry = (hashEntry){.kEntry = kEntry,
                                 .value = NULL,
                                 .hash = hashKey(kEntry, 0),
                                 .left = -1,
@@ -433,7 +433,7 @@ unsigned int maxDepthHT(const hashTree *pHT, const size_t nodeIndex) {
 void balanceHT(hashTree *pHT) { _balanceNodeHT(pHT, pHT->root, 0); }
 
 hashEntry *getHT(const hashTree *pHT, const keyEntry *kEntry) {
-  hashEntry entry = (hashEntry){.key = kEntry->key,
+  hashEntry entry = (hashEntry){.kEntry = kEntry,
                                 .value = NULL,
                                 .hash = hashKey(kEntry, 0),
                                 .left = -1,
@@ -466,7 +466,7 @@ hashTree *createHT(int compare(const void *a, const void *b),
 }
 
 void addHT(hashTree *pHT, const keyEntry *kEntry, void *value) {
-  hashEntry entry = (hashEntry){.key = kEntry->key,
+  hashEntry entry = (hashEntry){.kEntry = kEntry,
                                 .value = value,
                                 .hash = hashKey(kEntry, 0),
                                 .left = -1,

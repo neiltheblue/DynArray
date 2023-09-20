@@ -9,11 +9,12 @@
 hashTree *pHT;
 int buffer = 100;
 
-void makeKeyValues(int count, char keys[][100], char values[][100], keyEntry kEntry[]) {
+void makeKeyValues(int count, char keys[][100], char values[][100],
+                   keyEntry kEntry[]) {
   for (int i = 0; i < count; i++) {
     snprintf(keys[i], buffer, "Key %d", i);
     snprintf(values[i], buffer, "Values %d", i);
-	kEntry[i]=(keyEntry){.key=keys[i], .length=strlen(keys[i])};
+    kEntry[i] = (keyEntry){.key = keys[i], .length = strlen(keys[i])};
   }
 }
 
@@ -152,30 +153,30 @@ void test_getNode(void **state) {
   idx = 0;
   found = getHT(pHT, &kEntry[idx]);
   assert_non_null(found);
-  assert_int_equal(strcmp(found->key, keys[idx]), 0);
+  assert_int_equal(strcmp(found->kEntry->key, keys[idx]), 0);
 
   idx = 1;
   found = getHT(pHT, &kEntry[idx]);
   assert_non_null(found);
-  assert_int_equal(strcmp(found->key, keys[idx]), 0);
+  assert_int_equal(strcmp(found->kEntry->key, keys[idx]), 0);
 
   idx = 2;
   found = getHT(pHT, &kEntry[idx]);
   assert_non_null(found);
-  assert_int_equal(strcmp(found->key, keys[idx]), 0);
+  assert_int_equal(strcmp(found->kEntry->key, keys[idx]), 0);
 
   idx = 3;
   found = getHT(pHT, &kEntry[idx]);
   assert_non_null(found);
-  assert_int_equal(strcmp(found->key, keys[idx]), 0);
+  assert_int_equal(strcmp(found->kEntry->key, keys[idx]), 0);
 
   idx = 4;
   found = getHT(pHT, &kEntry[idx]);
   assert_non_null(found);
-  assert_int_equal(strcmp(found->key, keys[idx]), 0);
+  assert_int_equal(strcmp(found->kEntry->key, keys[idx]), 0);
 
   idx = 10;
-  keyEntry none = (keyEntry){.key="x", .length=strlen("x")};
+  keyEntry none = (keyEntry){.key = "x", .length = strlen("x")};
   found = getHT(pHT, &none);
   assert_null(found);
 }
@@ -364,7 +365,7 @@ void test_delete(void **state) {
   assert_int_equal(pHT->da->size, count);
 
   // delete none
-  keyEntry none=(keyEntry){.key="x", .length=strlen("x")};
+  keyEntry none = (keyEntry){.key = "x", .length = strlen("x")};
   deleteHT(pHT, &none);
   visitNodesHT(pHT, checkParent, NULL);
   assert_int_equal(pHT->da->size, count);

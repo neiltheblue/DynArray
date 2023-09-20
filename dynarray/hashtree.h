@@ -10,8 +10,6 @@
  * @brief Dynamic Array header file
  *
  * TODO:
- * - make helper sruct for entry search and delete to avoid needing 2 arguments
- * - make helper function to create string entry for search
  * - generate a set from a hash tree
  */
 
@@ -19,20 +17,20 @@
  * @brief A key entity
  */
 typedef struct KeyEntry {
-  const void *key;     ///< the key
-  size_t length;  ///< the key length
+  const void *key; ///< the key
+  size_t length;   ///< the key length
 } keyEntry;
 
 /**
  * @brief A key/value entity
  */
 typedef struct HashEntry {
-  const uint32_t hash; ///< the hash
-  const void *key;     ///< the key
-  void *value;   ///< the value
-  size_t parent; ///< the parent node
-  size_t left;   ///< the smaller left node
-  size_t right;  ///< the larger right node
+  const uint32_t hash;    ///< the hash
+  const keyEntry *kEntry; ///< the key
+  void *value;            ///< the value
+  size_t parent;          ///< the parent node
+  size_t left;            ///< the smaller left node
+  size_t right;           ///< the larger right node
 } hashEntry;
 
 /**
@@ -143,17 +141,16 @@ void balanceHT(hashTree *pHT);
  * @param ref optional value to pass to visit method, maybe NULL
  */
 void visitNodesHT(const hashTree *pHT,
-                  bool visit(const hashEntry *entry, const size_t entryIndex, void *ref),
+                  bool visit(const hashEntry *entry, const size_t entryIndex,
+                             void *ref),
                   void *ref);
-
 
 /**
  * @brief Delete a node from the tree
  * @param pHT the hash tree pointer to delete from
  * @param kEntry the key entry to delete
-  */
+ */
 void deleteHT(hashTree *pHT, const keyEntry *kEntry);
-
 
 /**
  * @brief Free a hash tree
