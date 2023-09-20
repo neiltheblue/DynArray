@@ -19,8 +19,9 @@ static inline uint32_t _rotateLeft(const uint32_t x, const uint8_t bits) {
 /**
  * @private
  */
-static inline void _process(const void *data, uint32_t *state0, uint32_t *state1,
-                             uint32_t *state2,  uint32_t *state3) {
+static inline void _process(const void *data, uint32_t *state0,
+                            uint32_t *state1, uint32_t *state2,
+                            uint32_t *state3) {
   const uint32_t *block = (const uint32_t *)data;
   *state0 = _rotateLeft(*state0 + block[0] * Prime2, 13) * Prime1;
   *state1 = _rotateLeft(*state1 + block[1] * Prime2, 13) * Prime1;
@@ -74,6 +75,10 @@ uint32_t hash(const void *input, const size_t length, const uint32_t seed) {
   return result;
 }
 
+uint32_t hashKey(const keyEntry *kEntry, const uint32_t seed) {
+  return hash(kEntry->key, kEntry->length, seed);
+}
+
 /**
  * @private
  */
@@ -109,8 +114,8 @@ static inline hashEntry *_getRootNodeHT(const hashTree *pHT,
 /**
  * @private
  */
-void _drawNode(const hashTree *pHT, const size_t nodeIdx, const char *topPrefix, const char *botPrefix,
-               FILE *file) {
+void _drawNode(const hashTree *pHT, const size_t nodeIdx, const char *topPrefix,
+               const char *botPrefix, FILE *file) {
   char nextTopPrefix[strlen(topPrefix) + 3];
   char nextBotPrefix[strlen(botPrefix) + 3];
   hashEntry *entry = getDA(pHT->da, nodeIdx);
@@ -290,7 +295,8 @@ void _balanceNodeHT(hashTree *pHT, const size_t nodeIndex, const int side) {
  * @private
  */
 bool _visitNodeHT(const hashTree *pHT, const size_t nodeIndex,
-                  bool visit(const hashEntry *entry, const size_t nodeIndex, void *ref),
+                  bool visit(const hashEntry *entry, const size_t nodeIndex,
+                             void *ref),
                   void *ref) {
   bool cont = true;
   if (nodeIndex != -1) {
@@ -397,10 +403,10 @@ void _deleteHT(hashTree *pHT, hashEntry *entry, const size_t nodeIndex) {
 // Exposed methods
 /////////////////////////////////
 
-void deleteHT(hashTree *pHT, const void *key, const size_t keyLength) {
-  hashEntry entry = (hashEntry){.key = key,
+void deleteHT(hashTree *pHT, const keyEntry *kEntry) {
+  hashEntry entry = (hashEntry){.key = kEntry->key,
                                 .value = NULL,
-                                .hash = hash(key, keyLength, 0),
+                                .hash = hashKey(kEntry, 0),
                                 .left = -1,
                                 .right = -1};
   _deleteHT(pHT, &entry, pHT->root);
@@ -426,10 +432,10 @@ unsigned int maxDepthHT(const hashTree *pHT, const size_t nodeIndex) {
 
 void balanceHT(hashTree *pHT) { _balanceNodeHT(pHT, pHT->root, 0); }
 
-hashEntry *getHT(const hashTree *pHT, const void *key, const size_t keyLength) {
-  hashEntry entry = (hashEntry){.key = key,
+hashEntry *getHT(const hashTree *pHT, const keyEntry *kEntry) {
+  hashEntry entry = (hashEntry){.key = kEntry->key,
                                 .value = NULL,
-                                .hash = hash(key, keyLength, 0),
+                                .hash = hashKey(kEntry, 0),
                                 .left = -1,
                                 .right = -1};
 
@@ -437,7 +443,8 @@ hashEntry *getHT(const hashTree *pHT, const void *key, const size_t keyLength) {
 }
 
 void visitNodesHT(const hashTree *pHT,
-                  bool visit(const hashEntry *entry, const size_t entryIndex, void *ref),
+                  bool visit(const hashEntry *entry, const size_t entryIndex,
+                             void *ref),
                   void *ref) {
   _visitNodeHT(pHT, pHT->root, visit, ref);
 }
@@ -458,10 +465,10 @@ hashTree *createHT(int compare(const void *a, const void *b),
   return pHT;
 }
 
-void addHT(hashTree *pHT, const void *key, const size_t keyLength, void *value) {
-  hashEntry entry = (hashEntry){.key = key,
+void addHT(hashTree *pHT, const keyEntry *kEntry, void *value) {
+  hashEntry entry = (hashEntry){.key = kEntry->key,
                                 .value = value,
-                                .hash = hash(key, keyLength, 0),
+                                .hash = hashKey(kEntry, 0),
                                 .left = -1,
                                 .right = -1};
 
@@ -490,8 +497,9 @@ void drawNode(const hashTree *pHT, const size_t nodeIdx, FILE *file) {
   fprintf(file, "\n");
 }
 
-void drawTree(const hashTree *pHT, FILE *file) 
-{ drawNode(pHT, pHT->root, file); }
+void drawTree(const hashTree *pHT, FILE *file) {
+  drawNode(pHT, pHT->root, file);
+}
 
 void freeHT(hashTree *pHT) {
   if (pHT) {

@@ -9,10 +9,11 @@
 hashTree *pHT;
 int buffer = 100;
 
-void makeKeyValues(int count, char keys[][100], char values[][100]) {
+void makeKeyValues(int count, char keys[][100], char values[][100], keyEntry kEntry[]) {
   for (int i = 0; i < count; i++) {
     snprintf(keys[i], buffer, "Key %d", i);
     snprintf(values[i], buffer, "Values %d", i);
+	kEntry[i]=(keyEntry){.key=keys[i], .length=strlen(keys[i])};
   }
 }
 
@@ -20,7 +21,7 @@ hashEntry *getIndexNodeHT(size_t nodeIndex) {
   return getDA(pHT->da, nodeIndex);
 }
 
-void printTree(hashTree *pHT) { drawTree(pHT,  NULL); }
+void printTree(hashTree *pHT) { drawTree(pHT, NULL); }
 
 void test_hash(void **state) {
   char *input = "this is my test key that needs to be longer than 32 chars";
@@ -36,17 +37,18 @@ void test_hash(void **state) {
 void test_addFirstLevelHT(void **state) {
   int count = 1;
   char keys[count][buffer];
+  keyEntry kEntry[count];
   char values[count][buffer];
   pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values);
+  makeKeyValues(count, keys, values, kEntry);
 
-  addHT(pHT, keys[0], strlen(keys[0]), values[0]);
+  addHT(pHT, &kEntry[0], values[0]);
   assert_int_equal(pHT->da->size, 1);
   assert_int_equal(pHT->root, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->parent, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->value, values[0]);
 
-  addHT(pHT, keys[0], strlen(keys[0]), values[1]);
+  addHT(pHT, &kEntry[0], values[1]);
   assert_int_equal(pHT->da->size, 1);
   assert_int_equal(pHT->root, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->parent, 0);
@@ -58,27 +60,28 @@ void test_addFirstLevelHT(void **state) {
 void test_addSecondLevelHT(void **state) {
   int count = 10;
   char keys[count][buffer];
+  keyEntry kEntry[count];
   char values[count][buffer];
   pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values);
+  makeKeyValues(count, keys, values, kEntry);
 
-  addHT(pHT, keys[3], strlen(keys[3]), values[3]);
+  addHT(pHT, &kEntry[3], values[3]);
   assert_int_equal(pHT->da->size, 1);
   assert_int_equal(pHT->root, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->parent, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->value, values[3]);
 
-  addHT(pHT, keys[1], strlen(keys[1]), values[1]);
+  addHT(pHT, &kEntry[1], values[1]);
   assert_int_equal(pHT->da->size, 2);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 1))->parent, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 1))->value, values[1]);
 
-  addHT(pHT, keys[7], strlen(keys[7]), values[7]);
+  addHT(pHT, &kEntry[7], values[7]);
   assert_int_equal(pHT->da->size, 3);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->parent, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->value, values[7]);
 
-  addHT(pHT, keys[8], strlen(keys[8]), values[8]);
+  addHT(pHT, &kEntry[8], values[8]);
   assert_int_equal(pHT->da->size, 4);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 3))->parent, 2);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 3))->value, values[8]);
@@ -89,41 +92,43 @@ void test_addSecondLevelHT(void **state) {
 void test_addThirdLevelHT(void **state) {
   int count = 10;
   char keys[count][buffer];
+  keyEntry kEntry[count];
   char values[count][buffer];
   pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values);
+  makeKeyValues(count, keys, values, kEntry);
 
-  addHT(pHT, keys[3], strlen(keys[3]), values[3]);
+  addHT(pHT, &kEntry[3], values[3]);
   assert_int_equal(pHT->da->size, 1);
   assert_int_equal(pHT->root, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->parent, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->value, values[3]);
 
-  addHT(pHT, keys[1], strlen(keys[1]), values[1]);
+  addHT(pHT, &kEntry[1], values[1]);
   assert_int_equal(pHT->da->size, 2);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 1))->parent, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 1))->value, values[1]);
 
-  addHT(pHT, keys[7], strlen(keys[7]), values[7]);
+  addHT(pHT, &kEntry[7], values[7]);
   assert_int_equal(pHT->da->size, 3);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->parent, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->value, values[7]);
 
   size_t idx = 0;
   printf("Index %lu\n", idx);
-  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  addHT(pHT, &kEntry[idx], values[idx]);
   assert_int_equal(pHT->da->size, 4);
 }
 
 void test_drawNode(void **state) {
   int count = 5;
   char keys[count][buffer];
+  keyEntry kEntry[count];
   char values[count][buffer];
   pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values);
+  makeKeyValues(count, keys, values, kEntry);
 
   for (int i = 0; i < count; i++) {
-    addHT(pHT, keys[i], strlen(keys[i]), values[i]);
+    addHT(pHT, &kEntry[i], values[i]);
   }
   printf("depth: %d\n", maxDepthHT(pHT, 0));
   drawNode(pHT, 0, NULL);
@@ -132,44 +137,46 @@ void test_drawNode(void **state) {
 void test_getNode(void **state) {
   int count = 10;
   char keys[count][buffer];
+  keyEntry kEntry[count];
   char values[count][buffer];
   pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values);
+  makeKeyValues(count, keys, values, kEntry);
 
   for (int i = 0; i < count - 1; i++) {
-    addHT(pHT, keys[i], strlen(keys[i]), values[i]);
+    addHT(pHT, &kEntry[i], values[i]);
   }
 
   size_t idx;
   hashEntry *found;
 
   idx = 0;
-  found = getHT(pHT, keys[idx], strlen(keys[idx]));
+  found = getHT(pHT, &kEntry[idx]);
   assert_non_null(found);
   assert_int_equal(strcmp(found->key, keys[idx]), 0);
 
   idx = 1;
-  found = getHT(pHT, keys[idx], strlen(keys[idx]));
+  found = getHT(pHT, &kEntry[idx]);
   assert_non_null(found);
   assert_int_equal(strcmp(found->key, keys[idx]), 0);
 
   idx = 2;
-  found = getHT(pHT, keys[idx], strlen(keys[idx]));
+  found = getHT(pHT, &kEntry[idx]);
   assert_non_null(found);
   assert_int_equal(strcmp(found->key, keys[idx]), 0);
 
   idx = 3;
-  found = getHT(pHT, keys[idx], strlen(keys[idx]));
+  found = getHT(pHT, &kEntry[idx]);
   assert_non_null(found);
   assert_int_equal(strcmp(found->key, keys[idx]), 0);
 
   idx = 4;
-  found = getHT(pHT, keys[idx], strlen(keys[idx]));
+  found = getHT(pHT, &kEntry[idx]);
   assert_non_null(found);
   assert_int_equal(strcmp(found->key, keys[idx]), 0);
 
   idx = 10;
-  found = getHT(pHT, keys[idx], strlen(keys[idx]));
+  keyEntry none = (keyEntry){.key="x", .length=strlen("x")};
+  found = getHT(pHT, &none);
   assert_null(found);
 }
 
@@ -182,12 +189,13 @@ bool visit_test(const hashEntry *entry, const size_t entryIndex, void *ref) {
 void test_vist(void **state) {
   int count = 10;
   char keys[count][buffer];
+  keyEntry kEntry[count];
   char values[count][buffer];
   pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values);
+  makeKeyValues(count, keys, values, kEntry);
 
   for (int i = 0; i < count; i++) {
-    addHT(pHT, keys[i], strlen(keys[i]), values[i]);
+    addHT(pHT, &kEntry[i], values[i]);
   }
 
   int counter = 0;
@@ -237,12 +245,13 @@ bool checkParent(const hashEntry *entry, const size_t entryIndex, void *ref) {
 void test_balanceNone(void **state) {
   int count = 10;
   char keys[count][buffer];
+  keyEntry kEntry[count];
   char values[count][buffer];
   pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values);
+  makeKeyValues(count, keys, values, kEntry);
 
   for (int i = 0; i < 1; i++) {
-    addHT(pHT, keys[i], strlen(keys[i]), values[i]);
+    addHT(pHT, &kEntry[i], values[i]);
   }
   balanceHT(pHT);
   assert_int_equal(maxDepthHT(pHT, pHT->root), 1);
@@ -251,12 +260,13 @@ void test_balanceNone(void **state) {
 void test_balanceLeft(void **state) {
   int count = 10;
   char keys[count][buffer];
+  keyEntry kEntry[count];
   char values[count][buffer];
   pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values);
+  makeKeyValues(count, keys, values, kEntry);
 
   for (int i = 0; i < 7; i++) {
-    addHT(pHT, keys[i], strlen(keys[i]), values[i]);
+    addHT(pHT, &kEntry[i], values[i]);
   }
   balanceHT(pHT);
   visitNodesHT(pHT, checkBalance, NULL);
@@ -265,25 +275,26 @@ void test_balanceLeft(void **state) {
 void test_balanceRight(void **state) {
   int count = 10;
   char keys[count][buffer];
+  keyEntry kEntry[count];
   char values[count][buffer];
   pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values);
+  makeKeyValues(count, keys, values, kEntry);
 
   int idx;
   idx = 0;
-  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  addHT(pHT, &kEntry[idx], values[idx]);
   idx = 5;
-  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  addHT(pHT, &kEntry[idx], values[idx]);
   idx = 4;
-  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  addHT(pHT, &kEntry[idx], values[idx]);
   idx = 6;
-  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  addHT(pHT, &kEntry[idx], values[idx]);
   idx = 1;
-  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  addHT(pHT, &kEntry[idx], values[idx]);
   idx = 7;
-  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  addHT(pHT, &kEntry[idx], values[idx]);
   idx = 3;
-  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  addHT(pHT, &kEntry[idx], values[idx]);
 
   balanceHT(pHT);
   assert_int_equal(maxDepthHT(pHT, pHT->root), 4);
@@ -293,19 +304,20 @@ void test_balanceRight(void **state) {
 void test_balanceRootRight(void **state) {
   int count = 10;
   char keys[count][buffer];
+  keyEntry kEntry[count];
   char values[count][buffer];
   pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values);
+  makeKeyValues(count, keys, values, kEntry);
 
   int idx;
   idx = 0;
-  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  addHT(pHT, &kEntry[idx], values[idx]);
   idx = 4;
-  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  addHT(pHT, &kEntry[idx], values[idx]);
   idx = 5;
-  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  addHT(pHT, &kEntry[idx], values[idx]);
   idx = 6;
-  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  addHT(pHT, &kEntry[idx], values[idx]);
 
   balanceHT(pHT);
   assert_int_equal(pHT->root, 1);
@@ -316,19 +328,20 @@ void test_balanceRootRight(void **state) {
 void test_balanceRootLeft(void **state) {
   int count = 10;
   char keys[count][buffer];
+  keyEntry kEntry[count];
   char values[count][buffer];
   pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values);
+  makeKeyValues(count, keys, values, kEntry);
 
   int idx;
   idx = 6;
-  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  addHT(pHT, &kEntry[idx], values[idx]);
   idx = 5;
-  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  addHT(pHT, &kEntry[idx], values[idx]);
   idx = 0;
-  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  addHT(pHT, &kEntry[idx], values[idx]);
   idx = 4;
-  addHT(pHT, keys[idx], strlen(keys[idx]), values[idx]);
+  addHT(pHT, &kEntry[idx], values[idx]);
 
   balanceHT(pHT);
   assert_int_equal(pHT->root, 1);
@@ -339,62 +352,64 @@ void test_balanceRootLeft(void **state) {
 void test_delete(void **state) {
   int count = 10;
   char keys[count][buffer];
+  keyEntry kEntry[count];
   char values[count][buffer];
   pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values);
+  makeKeyValues(count, keys, values, kEntry);
 
   for (int i = 0; i < count; i++) {
-    addHT(pHT, keys[i], strlen(keys[i]), values[i]);
+    addHT(pHT, &kEntry[i], values[i]);
   }
   visitNodesHT(pHT, checkParent, NULL);
   assert_int_equal(pHT->da->size, count);
 
   // delete none
-  deleteHT(pHT, "x", strlen("x"));
+  keyEntry none=(keyEntry){.key="x", .length=strlen("x")};
+  deleteHT(pHT, &none);
   visitNodesHT(pHT, checkParent, NULL);
   assert_int_equal(pHT->da->size, count);
 
   // delete leaf
   int idx;
   idx = 7;
-  deleteHT(pHT, keys[idx], strlen(keys[idx]));
+  deleteHT(pHT, &kEntry[idx]);
   visitNodesHT(pHT, checkParent, NULL);
-  assert_true(getHT(pHT, keys[idx], strlen(keys[idx])) == NULL);
+  assert_true(getHT(pHT, &kEntry[idx]) == NULL);
   assert_int_equal(pHT->da->size, count - 1);
 
   // delete branch
   idx = 4;
-  deleteHT(pHT, keys[idx], strlen(keys[idx]));
+  deleteHT(pHT, &kEntry[idx]);
   visitNodesHT(pHT, checkParent, NULL);
-  assert_true(getHT(pHT, keys[idx], strlen(keys[idx])) == NULL);
-  assert_true(getHT(pHT, keys[6], strlen(keys[6])) != NULL);
-  assert_true(getHT(pHT, keys[8], strlen(keys[8])) != NULL);
-  assert_true(getHT(pHT, keys[5], strlen(keys[5])) != NULL);
+  assert_true(getHT(pHT, &kEntry[idx]) == NULL);
+  assert_true(getHT(pHT, &kEntry[6]) != NULL);
+  assert_true(getHT(pHT, &kEntry[8]) != NULL);
+  assert_true(getHT(pHT, &kEntry[5]) != NULL);
   assert_int_equal(pHT->da->size, count - 2);
 
   // delete root
   idx = 0;
-  deleteHT(pHT, keys[idx], strlen(keys[idx]));
+  deleteHT(pHT, &kEntry[idx]);
   visitNodesHT(pHT, checkParent, NULL);
-  assert_true(getHT(pHT, keys[idx], strlen(keys[idx])) == NULL);
-  assert_true(getHT(pHT, keys[1], strlen(keys[1])) != NULL);
-  assert_true(getHT(pHT, keys[3], strlen(keys[3])) != NULL);
-  assert_true(getHT(pHT, keys[2], strlen(keys[2])) != NULL);
-  assert_true(getHT(pHT, keys[9], strlen(keys[9])) != NULL);
-  assert_true(getHT(pHT, keys[6], strlen(keys[6])) != NULL);
-  assert_true(getHT(pHT, keys[8], strlen(keys[8])) != NULL);
-  assert_true(getHT(pHT, keys[5], strlen(keys[5])) != NULL);
+  assert_true(getHT(pHT, &kEntry[idx]) == NULL);
+  assert_true(getHT(pHT, &kEntry[1]) != NULL);
+  assert_true(getHT(pHT, &kEntry[3]) != NULL);
+  assert_true(getHT(pHT, &kEntry[2]) != NULL);
+  assert_true(getHT(pHT, &kEntry[9]) != NULL);
+  assert_true(getHT(pHT, &kEntry[6]) != NULL);
+  assert_true(getHT(pHT, &kEntry[8]) != NULL);
+  assert_true(getHT(pHT, &kEntry[5]) != NULL);
   assert_int_equal(pHT->da->size, count - 3);
 
   // delete rest
   int rest[] = {1, 3, 2, 9, 6, 8, 5};
   for (int i = 0; i < 7; i++) {
     idx = rest[i];
-    deleteHT(pHT, keys[idx], strlen(keys[idx]));
+    deleteHT(pHT, &kEntry[idx]);
     visitNodesHT(pHT, checkParent, NULL);
-    assert_true(getHT(pHT, keys[idx], strlen(keys[idx])) == NULL);
+    assert_true(getHT(pHT, &kEntry[idx]) == NULL);
     for (int j = i + 1; j < 7; j++) {
-      assert_true(getHT(pHT, keys[rest[j]], strlen(keys[rest[j]])) != NULL);
+      assert_true(getHT(pHT, &kEntry[rest[j]]) != NULL);
     }
     assert_int_equal(pHT->da->size, count - 4 - i);
   }
@@ -403,7 +418,7 @@ void test_delete(void **state) {
 
   // re-add
   for (int i = 0; i < count; i++) {
-    addHT(pHT, keys[i], strlen(keys[i]), values[i]);
+    addHT(pHT, &kEntry[i], values[i]);
   }
   visitNodesHT(pHT, checkParent, NULL);
   assert_int_equal(pHT->da->size, count);

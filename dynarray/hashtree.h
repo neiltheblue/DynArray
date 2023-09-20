@@ -10,11 +10,18 @@
  * @brief Dynamic Array header file
  *
  * TODO:
- * - check if hash process is pass by value and not being updated!!!
  * - make helper sruct for entry search and delete to avoid needing 2 arguments
  * - make helper function to create string entry for search
  * - generate a set from a hash tree
  */
+
+/**
+ * @brief A key entity
+ */
+typedef struct KeyEntry {
+  const void *key;     ///< the key
+  size_t length;  ///< the key length
+} keyEntry;
 
 /**
  * @brief A key/value entity
@@ -58,6 +65,18 @@ typedef struct HashTreeParams {
 uint32_t hash(const void *input, size_t length, uint32_t seed);
 
 /**
+ * @brief Generate a hash value for a key entry
+ *
+ * This is an implementaion of xxHash. The seed can be 0, as it is just used to
+ * provide a predictable result, which can be used for collision avoidance.
+ *
+ * @param kEntry the key entry
+ * @param seed the hash starting seed
+ * @return the hash value
+ */
+uint32_t hashKey(const keyEntry *kEntry, const uint32_t seed);
+
+/**
  * @brief Create a new hash tree
  *
  * @param compare the key comparator function
@@ -71,11 +90,10 @@ hashTree *createHT(int compare(const void *a, const void *b),
 /**
  * @brief Add a key value pair to the tree
  * @param pHT the hash tree pointer
- * @param key the key pointer
- * @param keyLength the key length
+ * @param kEntry the key entry pointer
  * @param value the value pointer
  */
-void addHT(hashTree *pHT, const void *key, const size_t keyLength, void *value);
+void addHT(hashTree *pHT, const keyEntry *kEntry, void *value);
 
 /**
  * @brief Get the tree depth of the sub-tree
@@ -103,11 +121,10 @@ void drawTree(const hashTree *pHT, FILE *file);
 /**
  * @brief Find a node in the tree
  * @param pHT the hash tree pointer to search
- * @param key the entry key
- * @param keyLength the key length
+ * @param kEntry the key entry
  * @return the found entry or NULL if not found
  */
-hashEntry *getHT(const hashTree *pHT, const void *key, const size_t keyLength);
+hashEntry *getHT(const hashTree *pHT, const keyEntry *kEntry);
 
 /**
  * @brief Balance the tree
@@ -133,10 +150,9 @@ void visitNodesHT(const hashTree *pHT,
 /**
  * @brief Delete a node from the tree
  * @param pHT the hash tree pointer to delete from
- * @param key the key to delete
- * @param keyLength the key length
+ * @param kEntry the key entry to delete
   */
-void deleteHT(hashTree *pHT, const void *key, const size_t keyLength);
+void deleteHT(hashTree *pHT, const keyEntry *kEntry);
 
 
 /**
