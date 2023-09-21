@@ -6,8 +6,15 @@
 #include <time.h>
 #include <zcmocka.h>
 
-hashTree *pHT;
-int buffer = 100;
+#define COUNT 10
+#define BUFFER 100
+
+hashTree *pHT = NULL;
+const int buffer = BUFFER;
+const int count = COUNT;
+char keys[COUNT][BUFFER];
+char values[COUNT][BUFFER];
+keyEntry kEntry[COUNT];
 
 void makeKeyValues(int count, char keys[][100], char values[][100],
                    keyEntry kEntry[]) {
@@ -36,12 +43,6 @@ void test_hash(void **state) {
 }
 
 void test_addFirstLevelHT(void **state) {
-  int count = 1;
-  char keys[count][buffer];
-  keyEntry kEntry[count];
-  char values[count][buffer];
-  pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values, kEntry);
 
   addHT(pHT, &kEntry[0], values[0]);
   assert_int_equal(pHT->da->size, 1);
@@ -59,12 +60,6 @@ void test_addFirstLevelHT(void **state) {
 }
 
 void test_addSecondLevelHT(void **state) {
-  int count = 10;
-  char keys[count][buffer];
-  keyEntry kEntry[count];
-  char values[count][buffer];
-  pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values, kEntry);
 
   addHT(pHT, &kEntry[3], values[3]);
   assert_int_equal(pHT->da->size, 1);
@@ -91,12 +86,6 @@ void test_addSecondLevelHT(void **state) {
 }
 
 void test_addThirdLevelHT(void **state) {
-  int count = 10;
-  char keys[count][buffer];
-  keyEntry kEntry[count];
-  char values[count][buffer];
-  pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values, kEntry);
 
   addHT(pHT, &kEntry[3], values[3]);
   assert_int_equal(pHT->da->size, 1);
@@ -121,12 +110,6 @@ void test_addThirdLevelHT(void **state) {
 }
 
 void test_drawNode(void **state) {
-  int count = 5;
-  char keys[count][buffer];
-  keyEntry kEntry[count];
-  char values[count][buffer];
-  pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values, kEntry);
 
   for (int i = 0; i < count; i++) {
     addHT(pHT, &kEntry[i], values[i]);
@@ -136,12 +119,6 @@ void test_drawNode(void **state) {
 }
 
 void test_getNode(void **state) {
-  int count = 10;
-  char keys[count][buffer];
-  keyEntry kEntry[count];
-  char values[count][buffer];
-  pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values, kEntry);
 
   for (int i = 0; i < count - 1; i++) {
     addHT(pHT, &kEntry[i], values[i]);
@@ -188,12 +165,6 @@ bool visit_test(const hashEntry *entry, const size_t entryIndex, void *ref) {
 }
 
 void test_vist(void **state) {
-  int count = 10;
-  char keys[count][buffer];
-  keyEntry kEntry[count];
-  char values[count][buffer];
-  pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values, kEntry);
 
   for (int i = 0; i < count; i++) {
     addHT(pHT, &kEntry[i], values[i]);
@@ -244,12 +215,6 @@ bool checkParent(const hashEntry *entry, const size_t entryIndex, void *ref) {
 }
 
 void test_balanceNone(void **state) {
-  int count = 10;
-  char keys[count][buffer];
-  keyEntry kEntry[count];
-  char values[count][buffer];
-  pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values, kEntry);
 
   for (int i = 0; i < 1; i++) {
     addHT(pHT, &kEntry[i], values[i]);
@@ -259,12 +224,6 @@ void test_balanceNone(void **state) {
 }
 
 void test_balanceLeft(void **state) {
-  int count = 10;
-  char keys[count][buffer];
-  keyEntry kEntry[count];
-  char values[count][buffer];
-  pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values, kEntry);
 
   for (int i = 0; i < 7; i++) {
     addHT(pHT, &kEntry[i], values[i]);
@@ -274,12 +233,6 @@ void test_balanceLeft(void **state) {
 }
 
 void test_balanceRight(void **state) {
-  int count = 10;
-  char keys[count][buffer];
-  keyEntry kEntry[count];
-  char values[count][buffer];
-  pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values, kEntry);
 
   int idx;
   idx = 0;
@@ -303,12 +256,6 @@ void test_balanceRight(void **state) {
 }
 
 void test_balanceRootRight(void **state) {
-  int count = 10;
-  char keys[count][buffer];
-  keyEntry kEntry[count];
-  char values[count][buffer];
-  pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values, kEntry);
 
   int idx;
   idx = 0;
@@ -327,12 +274,6 @@ void test_balanceRootRight(void **state) {
 }
 
 void test_balanceRootLeft(void **state) {
-  int count = 10;
-  char keys[count][buffer];
-  keyEntry kEntry[count];
-  char values[count][buffer];
-  pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values, kEntry);
 
   int idx;
   idx = 6;
@@ -351,12 +292,6 @@ void test_balanceRootLeft(void **state) {
 }
 
 void test_delete(void **state) {
-  int count = 10;
-  char keys[count][buffer];
-  keyEntry kEntry[count];
-  char values[count][buffer];
-  pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values, kEntry);
 
   for (int i = 0; i < count; i++) {
     addHT(pHT, &kEntry[i], values[i]);
@@ -426,12 +361,6 @@ void test_delete(void **state) {
 }
 
 void test_clear(void **state) {
-  int count = 1;
-  char keys[count][buffer];
-  keyEntry kEntry[count];
-  char values[count][buffer];
-  pHT = createHT(compareString, NULL);
-  makeKeyValues(count, keys, values, kEntry);
 
   for (int i = 0; i < count; i++) {
     addHT(pHT, &kEntry[i], values[i]);
@@ -455,7 +384,9 @@ void test_clear(void **state) {
 
 int setupHT(void **state) {
 
-  pHT = NULL;
+  pHT = createHT(compareString, NULL);
+  makeKeyValues(count, keys, values, kEntry);
+
   return 0;
 }
 
@@ -488,11 +419,11 @@ int test_tree(void) {
                                       teardownHT),
       cmocka_unit_test_setup_teardown(test_vist, setupHT, teardownHT),
       cmocka_unit_test_setup_teardown(test_delete, setupHT, teardownHT),
-	  cmocka_unit_test_setup_teardown(test_clear, setupHT, teardownHT),	  
+      cmocka_unit_test_setup_teardown(test_clear, setupHT, teardownHT),
 
   };
 
-  int count_fail_tests = cmocka_run_group_tests(tests, setupHT, teardownHT);
+  int count_fail_tests = cmocka_run_group_tests(tests, NULL, NULL);
 
   return count_fail_tests;
 }

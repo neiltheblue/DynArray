@@ -10,13 +10,14 @@
  * @brief Dynamic Array header file
  *
  * TODO:
+ * - add a tree delete callback
  * - generate a set from a hash tree
- * -- add has all function
- * -- add add all function
- * -- add get all function
- * -- add delete all function
- * -- add retain all function
- * -- add union function
+ * -- add has all function for array
+ * -- add add all function for array
+ * -- add get all function for tree
+ * -- add delete all function for array
+ * -- add retain all function for tree
+ * -- add union function for tree
  */
 
 /**
@@ -164,6 +165,7 @@ void deleteHT(hashTree *pHT, const keyEntry *kEntry);
  * @param pHT the hash tree pointer to clear
  */
 void clearHT(hashTree *pHT);
+
 
 /**
  * @brief Free a hash tree
