@@ -10,7 +10,6 @@
  * @brief Dynamic Array header file
  *
  * TODO:
- * - add a tree delete callback
  * - generate a set from a hash tree
  * -- add has all function for array
  * -- add add all function for array
@@ -33,7 +32,7 @@ typedef struct KeyEntry {
  */
 typedef struct HashEntry {
   const uint32_t hash;    ///< the hash
-  const keyEntry *kEntry; ///< the key  
+  const keyEntry *kEntry; ///< the key
   size_t parent;          ///< the parent node
   size_t left;            ///< the smaller left node
   size_t right;           ///< the larger right node
@@ -159,13 +158,23 @@ void visitNodesHT(const hashTree *pHT,
  */
 void deleteHT(hashTree *pHT, const keyEntry *kEntry);
 
+/**
+ * @brief Delete a node from the tree
+ * @param pHT the hash tree pointer to delete from
+ * @param kEntry the key entry to delete
+ * @param deleted the method call back when an item is deleted, may be NULL
+ * @param ref the reference to pass to the deleted function
+ */
+void deleteCallbackHT(hashTree *pHT, const keyEntry *kEntry,
+                      void deleted(const hashTree *pHT, const keyEntry *kEntry,
+                                   void *value, void *ref),
+                      void *ref);
 
 /**
  * @brief Clear the contents of the hash tree.
  * @param pHT the hash tree pointer to clear
  */
 void clearHT(hashTree *pHT);
-
 
 /**
  * @brief Free a hash tree

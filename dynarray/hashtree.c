@@ -356,7 +356,10 @@ void _reinsertHT(hashTree *pHT, const size_t entryIndex) {
 /**
  * @private
  */
-void _deleteHT(hashTree *pHT, hashEntry *entry, const size_t nodeIndex) {
+void _deleteHT(hashTree *pHT, hashEntry *entry, const size_t nodeIndex,
+               void deleted(const hashTree *pHT, const keyEntry *kEntry,
+                            void *value, void *ref),
+               void *ref) {
 
   size_t found = _findNodeIndexHT(pHT, entry, pHT->root);
 
@@ -374,6 +377,10 @@ void _deleteHT(hashTree *pHT, hashEntry *entry, const size_t nodeIndex) {
 
     _reinsertHT(pHT, delNode->left);
     _reinsertHT(pHT, delNode->right);
+
+    if (deleted) {
+      deleted(pHT, delNode->kEntry, delNode->value, ref);
+    }
 
     size_t lastIndex = pHT->da->size - 1;
     if (lastIndex > 0) {
@@ -404,12 +411,19 @@ void _deleteHT(hashTree *pHT, hashEntry *entry, const size_t nodeIndex) {
 /////////////////////////////////
 
 void deleteHT(hashTree *pHT, const keyEntry *kEntry) {
+  deleteCallbackHT(pHT, kEntry, NULL, NULL);
+}
+
+void deleteCallbackHT(hashTree *pHT, const keyEntry *kEntry,
+                      void deleted(const hashTree *pHT, const keyEntry *kEntry,
+                                   void *value, void *ref),
+                      void *ref) {
   hashEntry entry = (hashEntry){.kEntry = kEntry,
                                 .value = NULL,
                                 .hash = hashKey(kEntry, 0),
                                 .left = -1,
                                 .right = -1};
-  _deleteHT(pHT, &entry, pHT->root);
+  _deleteHT(pHT, &entry, pHT->root, deleted, ref);
 }
 
 unsigned int maxDepthHT(const hashTree *pHT, const size_t nodeIndex) {
@@ -451,7 +465,6 @@ void visitNodesHT(const hashTree *pHT,
 
 hashTree *createHT(int compare(const void *a, const void *b),
                    hashTreeParams *params) {
-
   hashTree *pHT = _safeCalloc(1, sizeof(hashTree));
 
   if (params == NULL) {
@@ -494,7 +507,6 @@ void clearHT(hashTree *pHT) {
 }
 
 void drawNode(const hashTree *pHT, const size_t nodeIdx, FILE *file) {
-
   if (file == NULL) {
     file = stdout;
   }

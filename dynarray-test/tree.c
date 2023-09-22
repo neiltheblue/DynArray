@@ -360,6 +360,27 @@ void test_delete(void **state) {
   assert_int_equal(pHT->da->size, count);
 }
 
+void deletedCallback(const hashTree *pHT, const keyEntry *kEntry, void *value,
+                     void *ref) {
+  assert_int_equal(strcmp((char *)(kEntry->key), (char *)ref), 0);
+}
+
+void test_deleteCallback(void **state) {
+
+  for (int i = 0; i < count; i++) {
+    addHT(pHT, &kEntry[i], values[i]);
+  }
+  visitNodesHT(pHT, checkParent, NULL);
+  assert_int_equal(pHT->da->size, count);
+
+  for (int i = 0; i < count; i++) {
+    hashEntry *he = getDA(pHT->da, 0);
+    char kstr[100];
+    strcpy(kstr, he->kEntry->key);
+    deleteCallbackHT(pHT, he->kEntry, deletedCallback, kstr);
+  }
+}
+
 void test_clear(void **state) {
 
   for (int i = 0; i < count; i++) {
@@ -420,6 +441,7 @@ int test_tree(void) {
       cmocka_unit_test_setup_teardown(test_vist, setupHT, teardownHT),
       cmocka_unit_test_setup_teardown(test_delete, setupHT, teardownHT),
       cmocka_unit_test_setup_teardown(test_clear, setupHT, teardownHT),
+      cmocka_unit_test_setup_teardown(test_deleteCallback, setupHT, teardownHT),
 
   };
 
