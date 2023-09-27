@@ -11,9 +11,10 @@
  *
  * TODO:
  * - generate a set from a hash tree
- * -- add has all function for array
  * -- add add all function for array
  * -- add get all function for tree
+ * -- copy array
+ * -- copy tree
  * -- add delete all function for array
  * -- add retain all function for tree
  * -- add union function for tree
@@ -169,6 +170,22 @@ void deleteCallbackHT(hashTree *pHT, const keyEntry *kEntry,
                       void deleted(const hashTree *pHT, const keyEntry *kEntry,
                                    void *value, void *ref),
                       void *ref);
+
+/**
+ * @brief Check if the tree has an entry
+ * @param pHT the hash tree pointer to search
+ * @param kEntry the entry key to search for
+ * @return  'true' if the key is found else false
+ */
+bool hasEntryHT(const hashTree *pHT, const keyEntry *kEntry);
+
+/**
+ * @brief Check if the tree contains all the keys of the another tree
+ * @param pHT the hash tree pointer to search
+ * @param pOther the hash tree of pointers to search for
+ * @return 'trye' if all other keys are in the tree
+ */
+bool hasAllHT(const hashTree *pHT, const hashTree *pOther);
 
 /**
  * @brief Clear the contents of the hash tree.

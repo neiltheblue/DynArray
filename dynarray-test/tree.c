@@ -10,6 +10,7 @@
 #define BUFFER 100
 
 hashTree *pHT = NULL;
+hashTree *pOther = NULL;
 const int buffer = BUFFER;
 const int count = COUNT;
 char keys[COUNT][BUFFER];
@@ -381,6 +382,30 @@ void test_deleteCallback(void **state) {
   }
 }
 
+void test_hasEntry(void **state) {
+
+  for (int i = 0; i < count; i++) {
+    addHT(pHT, &kEntry[i], values[i]);
+  }
+  keyEntry noEntry = (keyEntry){.key = "x", .length = strlen("x")};
+
+  assert_false(hasEntryHT(pHT, &noEntry));
+
+  for (int i = 0; i < count; i++) {
+    assert_true(hasEntryHT(pHT, &kEntry[i]));
+  }
+
+  addHT(pOther, &kEntry[2], values[2]);
+  addHT(pOther, &kEntry[5], values[5]);
+  addHT(pOther, &kEntry[8], values[8]);
+
+  assert_true(hasAllHT(pHT, pOther));
+
+  addHT(pOther, &noEntry, "x");
+
+  assert_false(hasAllHT(pHT, pOther));
+}
+
 void test_clear(void **state) {
 
   for (int i = 0; i < count; i++) {
@@ -406,6 +431,7 @@ void test_clear(void **state) {
 int setupHT(void **state) {
 
   pHT = createHT(compareString, NULL);
+  pOther = createHT(compareString, NULL);
   makeKeyValues(count, keys, values, kEntry);
 
   return 0;
@@ -415,6 +441,11 @@ int teardownHT(void **state) {
   if (pHT) {
     freeHT(pHT);
     pHT = NULL;
+  }
+
+  if (pOther) {
+    freeHT(pOther);
+    pOther = NULL;
   }
 
   return 0;
@@ -442,6 +473,7 @@ int test_tree(void) {
       cmocka_unit_test_setup_teardown(test_delete, setupHT, teardownHT),
       cmocka_unit_test_setup_teardown(test_clear, setupHT, teardownHT),
       cmocka_unit_test_setup_teardown(test_deleteCallback, setupHT, teardownHT),
+      cmocka_unit_test_setup_teardown(test_hasEntry, setupHT, teardownHT),
 
   };
 

@@ -499,6 +499,21 @@ void addHT(hashTree *pHT, const keyEntry *kEntry, void *value) {
   }
 }
 
+bool hasEntryHT(const hashTree *pHT, const keyEntry *kEntry) {
+  return getHT(pHT, kEntry) != NULL;
+}
+
+bool hasAllHT(const hashTree *pHT, const hashTree *pOther) {
+  bool has = pHT != NULL && pOther != NULL && pHT->da->size >= pOther->da->size;
+
+  size_t limit = pOther->da->size;
+  for (size_t i = 0; has && i < limit; i++) {
+    has = hasEntryHT(pHT, _getIndexNodeHT(pOther, i)->kEntry);
+  }
+
+  return has;
+}
+
 void clearHT(hashTree *pHT) {
   if (pHT) {
     clearDA(pHT->da);
