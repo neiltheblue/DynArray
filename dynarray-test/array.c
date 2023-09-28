@@ -74,10 +74,10 @@ void test_clearDA(void **state) {
   assert_int_equal(pDALng->size, max);
 }
 
-void test_addAllDA(void **state) {
+void test_addArrayDA(void **state) {
   pDALng = createDA(sizeof(long), NULL, NULL);
 
-  assert_int_equal(addAllDA(pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10),
+  assert_int_equal(addArrayDA(pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10),
                    true);
 
   long i;
@@ -88,7 +88,7 @@ void test_addAllDA(void **state) {
   }
 
   assert_int_equal(
-      addAllDA(pDALng, (long[]){10, 11, 12, 13, 14, 15, 16, 17, 18, 19}, 10),
+      addArrayDA(pDALng, (long[]){10, 11, 12, 13, 14, 15, 16, 17, 18, 19}, 10),
       true);
   for (i = 0; i < 20; i++) {
     read = getDA(pDALng, i);
@@ -181,7 +181,7 @@ void test_quickSort(void **state) {
 
   long arr[] = {8, 7, 6, 1, 0, 9, 2, 6, 0};
   long sorted[] = {0, 0, 1, 2, 6, 6, 7, 8, 9};
-  addAllDA(pDALng, arr, 9);
+  addArrayDA(pDALng, arr, 9);
 
   sortDA(pDALng, compareDAlong);
 
@@ -214,7 +214,7 @@ void test_reverse(void **state) {
   pDALng = createDA(sizeof(long), NULL, NULL);
 
   long arr[] = {0, 0, 1, 2, 6, 6, 7, 8, 9};
-  addAllDA(pDALng, arr, 9);
+  addArrayDA(pDALng, arr, 9);
 
   long *read;
   for (int i = 0; i < 9; i++) {
@@ -231,7 +231,7 @@ void test_reverse(void **state) {
 
   pDAFlt = createDA(sizeof(float), NULL, NULL);
   float arrEven[] = {0.0, 0.0, 1.0, 2.0, 6.0, 6.0, 7.0, 8.0};
-  addAllDA(pDAFlt, arrEven, 8);
+  addArrayDA(pDAFlt, arrEven, 8);
   float *fread;
 
   for (int i = 0; i < 8; i++) {
@@ -252,7 +252,7 @@ void test_subDA(void **state) {
   long value = 666;
   long *read;
 
-  addAllDA(pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10);
+  addArrayDA(pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10);
   sortDA(pDALng, compareDAlong);
 
   assert_int_equal(subDA(pDALng, 1, 0), NULL);
@@ -280,7 +280,7 @@ void test_copy(void **state) {
   long *read;
   long arr[] = {0, 0, 1, 2, 6, 6, 7, 8, 9};
 
-  addAllDA(pDALng, arr, 9);
+  addArrayDA(pDALng, arr, 9);
   copy = copyDA(pDALng);
   for (int i = 0; i < 9; i++) {
     read = getDA(pDALng, i);
@@ -319,7 +319,7 @@ void test_binSearch(void **state) {
   assert_int_equal(searchDA(pDALng, &value, NULL), 1);
 
   long arr[] = {0, 0, 1, 2, 6, 6, 7, 8, 9};
-  addAllDA(pDALng, arr, 9);
+  addArrayDA(pDALng, arr, 9);
 
   value = 7;
   assert_int_equal(searchDA(pDALng, &value, compareDAlong), 6);
@@ -342,7 +342,7 @@ void test_appendDA(void **state) {
   dynArray *other = createDA(sizeof(long), NULL, NULL);
   long *v1, *v2;
 
-  addAllDA(pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10);
+  addArrayDA(pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10);
 
   appendDA(other, pDALng);
   assert_int_equal(other->size, pDALng->size);
@@ -421,7 +421,7 @@ int test_array(void) {
       cmocka_unit_test_setup_teardown(test_new_params_limits, setupDA,
                                       teardownDA),
       cmocka_unit_test_setup_teardown(test_addDA, setupDA, teardownDA),
-      cmocka_unit_test_setup_teardown(test_addAllDA, setupDA, teardownDA),
+      cmocka_unit_test_setup_teardown(test_addArrayDA, setupDA, teardownDA),
       cmocka_unit_test_setup_teardown(test_getDA, setupDA, teardownDA),
       cmocka_unit_test_setup_teardown(test_setDA, setupDA, teardownDA),
       cmocka_unit_test_setup_teardown(test_floatType, setupDA, teardownDA),

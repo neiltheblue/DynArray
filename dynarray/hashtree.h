@@ -11,11 +11,13 @@
  *
  * TODO:
  * - generate a set from a hash tree
- * -- add add all function for array
  * -- add get all function for tree
+ * -- add for each function for array
+ * -- add for each function for tree
  * -- copy array
  * -- copy tree
  * -- add delete all function for array
+ * -- add delete all function for tree and with callback
  * -- add retain all function for tree
  * -- add union function for tree
  */
@@ -93,12 +95,19 @@ hashTree *createHT(int compare(const void *a, const void *b),
                    hashTreeParams *params);
 
 /**
- * @brief Add a key value pair to the tree
+ * @brief Aet a key value pair in the tree
  * @param pHT the hash tree pointer
  * @param kEntry the key entry pointer
  * @param value the value pointer
  */
-void addHT(hashTree *pHT, const keyEntry *kEntry, void *value);
+void setHT(hashTree *pHT, const keyEntry *kEntry, void *value);
+
+/**
+ * @brief Set all the key value pairs from the other tree
+ * @param pHT the hash tree pointer to set in
+ * @param pOther the hash tree pointer to the entries to add
+ */
+void setAllHT(hashTree *pHT, const hashTree *pOther);
 
 /**
  * @brief Get the tree depth of the sub-tree

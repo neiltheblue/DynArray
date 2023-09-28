@@ -146,16 +146,28 @@ bool setDA(dynArray *pDA, const size_t index, const void *value);
 void *addDA(dynArray *pDA, const void *value);
 
 /**
- * @brief Add a dynamic array value
+ * @brief Add a dynamic array of values
  *
  * This will only add values if the array is not a sub-array.
  *
  * @param pDA the array pointer to update
- * @param src the source value array to cop yinto the array
+ * @param src the source value array to copy into the array
  * @param length the number of elements to copy
  * @return 'true' if the values were added
  */
-bool addAllDA(dynArray *pDA, const void *src, size_t length);
+bool addArrayDA(dynArray *pDA, const void *src, size_t length);
+
+/**
+ * @brief Append a source dynamic array
+ *
+ * Will not append to a sub array, and the source array must have the same
+ * element size.
+ *
+ * @param pDA the array pointer to copy to
+ * @param pSrc the source array pointer
+ * @return 'true' if the array could be copied
+ */
+bool appendDA(dynArray *pDA, dynArray *pSrc);
 
 /**
  * @brief Get a dynamic array value
@@ -215,18 +227,6 @@ size_t searchDA(dynArray *pDA, const void *value,
  * @return the new sub array pointer or NULL if the new range is not valid
  */
 dynArray *subDA(dynArray *pDA, size_t min, size_t max);
-
-/**
- * @brief Append a source dynamic array
- *
- * Will not append to a sub array, and the source array must have the same
- * element size.
- *
- * @param pDA the array pointer to copy to
- * @param pSrc the source array pointer
- * @return 'true' if the array could be copied
- */
-bool appendDA(dynArray *pDA, dynArray *pSrc);
 
 /**
  * @brief Compare two strings

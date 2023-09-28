@@ -176,7 +176,7 @@ void sortDA(dynArray *pDA, int compare(const void *a, const void *b)) {
   _quickSort(pDA, 0, pDA->size - 1, compare ? compare : pDA->compare);
 }
 
-bool addAllDA(dynArray *pDA, const void *src, const size_t length) {
+bool addArrayDA(dynArray *pDA, const void *src, const size_t length) {
   bool added = false;
   if (pDA->parent == NULL) {
     size_t lastIndex = pDA->size;
@@ -196,7 +196,7 @@ bool addAllDA(dynArray *pDA, const void *src, const size_t length) {
 void *addDA(dynArray *pDA, const void *value) {
   void *rtn;
   if (pDA->parent == NULL) {
-    addAllDA(pDA, value, 1);
+    addArrayDA(pDA, value, 1);
     rtn = getDA(pDA, pDA->size - 1);
   } else {
     rtn = NULL;
@@ -271,10 +271,12 @@ dynArray *subDA(dynArray *pDA, const size_t min, const size_t max) {
 bool appendDA(dynArray *pDA, dynArray *pSrc) {
   bool appended = false;
   if (pDA->elementSize == pSrc->elementSize) {
-    appended = addAllDA(pDA, pSrc->array, pSrc->size);
+    appended = addArrayDA(pDA, pSrc->array, pSrc->size);
   }
   return appended;
 }
+
+
 
 void clearDA(dynArray *pDA) {
   if (pDA) {

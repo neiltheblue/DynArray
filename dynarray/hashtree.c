@@ -479,7 +479,7 @@ hashTree *createHT(int compare(const void *a, const void *b),
   return pHT;
 }
 
-void addHT(hashTree *pHT, const keyEntry *kEntry, void *value) {
+void setHT(hashTree *pHT, const keyEntry *kEntry, void *value) {
   hashEntry entry = (hashEntry){.kEntry = kEntry,
                                 .value = value,
                                 .hash = hashKey(kEntry, 0),
@@ -496,6 +496,14 @@ void addHT(hashTree *pHT, const keyEntry *kEntry, void *value) {
   } else {
     // update the root node
     _addToNodeHT(pHT, &entry, pHT->root);
+  }
+}
+
+void setAllHT(hashTree *pHT, const hashTree *pOther) {
+  size_t limit = pOther->da->size;
+  for (size_t i = 0; i < limit; i++) {
+    hashEntry *other = _getIndexNodeHT(pOther, i);
+    setHT(pHT, other->kEntry, other->value);
   }
 }
 

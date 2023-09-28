@@ -45,13 +45,13 @@ void test_hash(void **state) {
 
 void test_addFirstLevelHT(void **state) {
 
-  addHT(pHT, &kEntry[0], values[0]);
+  setHT(pHT, &kEntry[0], values[0]);
   assert_int_equal(pHT->da->size, 1);
   assert_int_equal(pHT->root, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->parent, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->value, values[0]);
 
-  addHT(pHT, &kEntry[0], values[1]);
+  setHT(pHT, &kEntry[0], values[1]);
   assert_int_equal(pHT->da->size, 1);
   assert_int_equal(pHT->root, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->parent, 0);
@@ -62,23 +62,23 @@ void test_addFirstLevelHT(void **state) {
 
 void test_addSecondLevelHT(void **state) {
 
-  addHT(pHT, &kEntry[3], values[3]);
+  setHT(pHT, &kEntry[3], values[3]);
   assert_int_equal(pHT->da->size, 1);
   assert_int_equal(pHT->root, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->parent, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->value, values[3]);
 
-  addHT(pHT, &kEntry[1], values[1]);
+  setHT(pHT, &kEntry[1], values[1]);
   assert_int_equal(pHT->da->size, 2);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 1))->parent, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 1))->value, values[1]);
 
-  addHT(pHT, &kEntry[7], values[7]);
+  setHT(pHT, &kEntry[7], values[7]);
   assert_int_equal(pHT->da->size, 3);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->parent, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->value, values[7]);
 
-  addHT(pHT, &kEntry[8], values[8]);
+  setHT(pHT, &kEntry[8], values[8]);
   assert_int_equal(pHT->da->size, 4);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 3))->parent, 2);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 3))->value, values[8]);
@@ -88,32 +88,60 @@ void test_addSecondLevelHT(void **state) {
 
 void test_addThirdLevelHT(void **state) {
 
-  addHT(pHT, &kEntry[3], values[3]);
+  setHT(pHT, &kEntry[3], values[3]);
   assert_int_equal(pHT->da->size, 1);
   assert_int_equal(pHT->root, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->parent, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 0))->value, values[3]);
 
-  addHT(pHT, &kEntry[1], values[1]);
+  setHT(pHT, &kEntry[1], values[1]);
   assert_int_equal(pHT->da->size, 2);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 1))->parent, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 1))->value, values[1]);
 
-  addHT(pHT, &kEntry[7], values[7]);
+  setHT(pHT, &kEntry[7], values[7]);
   assert_int_equal(pHT->da->size, 3);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->parent, 0);
   assert_int_equal(((hashEntry *)getDA(pHT->da, 2))->value, values[7]);
 
   size_t idx = 0;
   printf("Index %lu\n", idx);
-  addHT(pHT, &kEntry[idx], values[idx]);
+  setHT(pHT, &kEntry[idx], values[idx]);
   assert_int_equal(pHT->da->size, 4);
+}
+
+void test_setAllHT(void **state) {
+
+  for (int i = 0; i < count; i++) {
+    setHT(pOther, &kEntry[i], values[i]);
+  }
+
+  assert_int_equal(pHT->da->size, 0);
+  assert_int_equal(pOther->da->size, count);
+
+  setAllHT(pHT, pOther);
+
+  assert_int_equal(pHT->da->size, count);
+  assert_int_equal(pOther->da->size, count);
+
+  for (int i = 0; i < count; i++) {
+    assert_true(hasEntryHT(pHT, getHT(pOther, &kEntry[i])->kEntry));
+  }
+
+  setAllHT(pHT, pOther);
+
+  assert_int_equal(pHT->da->size, count);
+  assert_int_equal(pOther->da->size, count);
+
+  for (int i = 0; i < count - 1; i++) {
+    assert_true(hasEntryHT(pHT, getHT(pOther, &kEntry[i])->kEntry));
+  }
 }
 
 void test_drawNode(void **state) {
 
   for (int i = 0; i < count; i++) {
-    addHT(pHT, &kEntry[i], values[i]);
+    setHT(pHT, &kEntry[i], values[i]);
   }
   printf("depth: %d\n", maxDepthHT(pHT, 0));
   drawNode(pHT, 0, NULL);
@@ -122,7 +150,7 @@ void test_drawNode(void **state) {
 void test_getNode(void **state) {
 
   for (int i = 0; i < count - 1; i++) {
-    addHT(pHT, &kEntry[i], values[i]);
+    setHT(pHT, &kEntry[i], values[i]);
   }
 
   size_t idx;
@@ -168,7 +196,7 @@ bool visit_test(const hashEntry *entry, const size_t entryIndex, void *ref) {
 void test_vist(void **state) {
 
   for (int i = 0; i < count; i++) {
-    addHT(pHT, &kEntry[i], values[i]);
+    setHT(pHT, &kEntry[i], values[i]);
   }
 
   int counter = 0;
@@ -218,7 +246,7 @@ bool checkParent(const hashEntry *entry, const size_t entryIndex, void *ref) {
 void test_balanceNone(void **state) {
 
   for (int i = 0; i < 1; i++) {
-    addHT(pHT, &kEntry[i], values[i]);
+    setHT(pHT, &kEntry[i], values[i]);
   }
   balanceHT(pHT);
   assert_int_equal(maxDepthHT(pHT, pHT->root), 1);
@@ -227,7 +255,7 @@ void test_balanceNone(void **state) {
 void test_balanceLeft(void **state) {
 
   for (int i = 0; i < 7; i++) {
-    addHT(pHT, &kEntry[i], values[i]);
+    setHT(pHT, &kEntry[i], values[i]);
   }
   balanceHT(pHT);
   visitNodesHT(pHT, checkBalance, NULL);
@@ -237,19 +265,19 @@ void test_balanceRight(void **state) {
 
   int idx;
   idx = 0;
-  addHT(pHT, &kEntry[idx], values[idx]);
+  setHT(pHT, &kEntry[idx], values[idx]);
   idx = 5;
-  addHT(pHT, &kEntry[idx], values[idx]);
+  setHT(pHT, &kEntry[idx], values[idx]);
   idx = 4;
-  addHT(pHT, &kEntry[idx], values[idx]);
+  setHT(pHT, &kEntry[idx], values[idx]);
   idx = 6;
-  addHT(pHT, &kEntry[idx], values[idx]);
+  setHT(pHT, &kEntry[idx], values[idx]);
   idx = 1;
-  addHT(pHT, &kEntry[idx], values[idx]);
+  setHT(pHT, &kEntry[idx], values[idx]);
   idx = 7;
-  addHT(pHT, &kEntry[idx], values[idx]);
+  setHT(pHT, &kEntry[idx], values[idx]);
   idx = 3;
-  addHT(pHT, &kEntry[idx], values[idx]);
+  setHT(pHT, &kEntry[idx], values[idx]);
 
   balanceHT(pHT);
   assert_int_equal(maxDepthHT(pHT, pHT->root), 4);
@@ -260,13 +288,13 @@ void test_balanceRootRight(void **state) {
 
   int idx;
   idx = 0;
-  addHT(pHT, &kEntry[idx], values[idx]);
+  setHT(pHT, &kEntry[idx], values[idx]);
   idx = 4;
-  addHT(pHT, &kEntry[idx], values[idx]);
+  setHT(pHT, &kEntry[idx], values[idx]);
   idx = 5;
-  addHT(pHT, &kEntry[idx], values[idx]);
+  setHT(pHT, &kEntry[idx], values[idx]);
   idx = 6;
-  addHT(pHT, &kEntry[idx], values[idx]);
+  setHT(pHT, &kEntry[idx], values[idx]);
 
   balanceHT(pHT);
   assert_int_equal(pHT->root, 1);
@@ -278,13 +306,13 @@ void test_balanceRootLeft(void **state) {
 
   int idx;
   idx = 6;
-  addHT(pHT, &kEntry[idx], values[idx]);
+  setHT(pHT, &kEntry[idx], values[idx]);
   idx = 5;
-  addHT(pHT, &kEntry[idx], values[idx]);
+  setHT(pHT, &kEntry[idx], values[idx]);
   idx = 0;
-  addHT(pHT, &kEntry[idx], values[idx]);
+  setHT(pHT, &kEntry[idx], values[idx]);
   idx = 4;
-  addHT(pHT, &kEntry[idx], values[idx]);
+  setHT(pHT, &kEntry[idx], values[idx]);
 
   balanceHT(pHT);
   assert_int_equal(pHT->root, 1);
@@ -295,7 +323,7 @@ void test_balanceRootLeft(void **state) {
 void test_delete(void **state) {
 
   for (int i = 0; i < count; i++) {
-    addHT(pHT, &kEntry[i], values[i]);
+    setHT(pHT, &kEntry[i], values[i]);
   }
   visitNodesHT(pHT, checkParent, NULL);
   assert_int_equal(pHT->da->size, count);
@@ -355,7 +383,7 @@ void test_delete(void **state) {
 
   // re-add
   for (int i = 0; i < count; i++) {
-    addHT(pHT, &kEntry[i], values[i]);
+    setHT(pHT, &kEntry[i], values[i]);
   }
   visitNodesHT(pHT, checkParent, NULL);
   assert_int_equal(pHT->da->size, count);
@@ -369,7 +397,7 @@ void deletedCallback(const hashTree *pHT, const keyEntry *kEntry, void *value,
 void test_deleteCallback(void **state) {
 
   for (int i = 0; i < count; i++) {
-    addHT(pHT, &kEntry[i], values[i]);
+    setHT(pHT, &kEntry[i], values[i]);
   }
   visitNodesHT(pHT, checkParent, NULL);
   assert_int_equal(pHT->da->size, count);
@@ -385,7 +413,7 @@ void test_deleteCallback(void **state) {
 void test_hasEntry(void **state) {
 
   for (int i = 0; i < count; i++) {
-    addHT(pHT, &kEntry[i], values[i]);
+    setHT(pHT, &kEntry[i], values[i]);
   }
   keyEntry noEntry = (keyEntry){.key = "x", .length = strlen("x")};
 
@@ -395,13 +423,13 @@ void test_hasEntry(void **state) {
     assert_true(hasEntryHT(pHT, &kEntry[i]));
   }
 
-  addHT(pOther, &kEntry[2], values[2]);
-  addHT(pOther, &kEntry[5], values[5]);
-  addHT(pOther, &kEntry[8], values[8]);
+  setHT(pOther, &kEntry[2], values[2]);
+  setHT(pOther, &kEntry[5], values[5]);
+  setHT(pOther, &kEntry[8], values[8]);
 
   assert_true(hasAllHT(pHT, pOther));
 
-  addHT(pOther, &noEntry, "x");
+  setHT(pOther, &noEntry, "x");
 
   assert_false(hasAllHT(pHT, pOther));
 }
@@ -409,7 +437,7 @@ void test_hasEntry(void **state) {
 void test_clear(void **state) {
 
   for (int i = 0; i < count; i++) {
-    addHT(pHT, &kEntry[i], values[i]);
+    setHT(pHT, &kEntry[i], values[i]);
   }
 
   assert_int_equal(pHT->da->size, count);
@@ -421,7 +449,7 @@ void test_clear(void **state) {
   assert_int_equal(pHT->root, -1);
 
   for (int i = 0; i < count; i++) {
-    addHT(pHT, &kEntry[i], values[i]);
+    setHT(pHT, &kEntry[i], values[i]);
   }
 
   assert_int_equal(pHT->da->size, count);
@@ -474,6 +502,7 @@ int test_tree(void) {
       cmocka_unit_test_setup_teardown(test_clear, setupHT, teardownHT),
       cmocka_unit_test_setup_teardown(test_deleteCallback, setupHT, teardownHT),
       cmocka_unit_test_setup_teardown(test_hasEntry, setupHT, teardownHT),
+	  cmocka_unit_test_setup_teardown(test_setAllHT, setupHT, teardownHT),
 
   };
 
