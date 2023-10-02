@@ -8,18 +8,6 @@
  * @file dynarray.h
  *
  * @brief Dynamic Array header file
- *
- * TODO:
- * - generate a set from a hash tree
- * -- add get all function for tree
- * -- add for each function for array
- * -- add for each function for tree
- * -- copy array
- * -- copy tree
- * -- add delete all function for array
- * -- add delete all function for tree and with callback
- * -- add retain all function for tree
- * -- add union function for tree
  */
 
 /**
@@ -95,6 +83,14 @@ hashTree *createHT(int compare(const void *a, const void *b),
                    hashTreeParams *params);
 
 /**
+ * @brief Copy a hash tree
+ * @param pHT the hash tree pointer to copy
+ * @return A copy of the hash tree that
+ *          should be freed with freeHT()
+ */
+hashTree *copyHT(hashTree *pHT);
+
+/**
  * @brief Aet a key value pair in the tree
  * @param pHT the hash tree pointer
  * @param kEntry the key entry pointer
@@ -162,6 +158,23 @@ void visitNodesHT(const hashTree *pHT,
                   void *ref);
 
 /**
+ * @brief Vist each node in the sub tree in a depth first path, from left to
+ * right
+ *
+ * If the visitor method returns false then the
+ * tree traversal will stop.
+ *
+ * @param pHT the hash tree pointer to visit
+ * @param index the entry index to start from
+ * @param visit the function to call for each node
+ * @param ref optional value to pass to visit method, maybe NULL
+ */
+void visitSubTreeHT(const hashTree *pHT, size_t index,
+                    bool visit(const hashEntry *entry, const size_t entryIndex,
+                               void *ref),
+                    void *ref);
+
+/**
  * @brief Delete a node from the tree
  * @param pHT the hash tree pointer to delete from
  * @param kEntry the key entry to delete
@@ -195,6 +208,14 @@ bool hasEntryHT(const hashTree *pHT, const keyEntry *kEntry);
  * @return 'trye' if all other keys are in the tree
  */
 bool hasAllHT(const hashTree *pHT, const hashTree *pOther);
+
+/**
+ * @brief Delete all entries from this tree that are not present in the other
+ * tree
+ * @param pHT the hash tree pointer to delete from
+ * @param pOther the other hash tree pointer to compare against
+ */
+void retainAllHT(hashTree *pHT, hashTree *pOther);
 
 /**
  * @brief Clear the contents of the hash tree.

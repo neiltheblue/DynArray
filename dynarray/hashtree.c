@@ -410,6 +410,23 @@ void _deleteHT(hashTree *pHT, hashEntry *entry, const size_t nodeIndex,
 // Exposed methods
 /////////////////////////////////
 
+void retainAllHT(hashTree *pHT, hashTree *pOther) {
+  size_t limit = pHT->da->size, cnt = 0;
+  const keyEntry *orphans[limit];
+
+  for (size_t i = 0; i < limit; i++) {
+    const keyEntry *kEntry = _getIndexNodeHT(pHT, i)->kEntry;
+    if (!hasEntryHT(pOther, kEntry)) {
+      orphans[cnt++] = kEntry;
+    }
+    orphans[cnt] = NULL;
+  }
+
+  for (size_t i = 0; i < limit && orphans[i] != NULL; i++) {
+    deleteHT(pHT, orphans[i]);
+  }
+}
+
 void deleteHT(hashTree *pHT, const keyEntry *kEntry) {
   deleteCallbackHT(pHT, kEntry, NULL, NULL);
 }
@@ -460,7 +477,14 @@ void visitNodesHT(const hashTree *pHT,
                   bool visit(const hashEntry *entry, const size_t entryIndex,
                              void *ref),
                   void *ref) {
-  _visitNodeHT(pHT, pHT->root, visit, ref);
+  visitSubTreeHT(pHT, pHT->root, visit, ref);
+}
+
+void visitSubTreeHT(const hashTree *pHT, size_t index,
+                    bool visit(const hashEntry *entry, const size_t entryIndex,
+                               void *ref),
+                    void *ref) {
+  _visitNodeHT(pHT, index, visit, ref);
 }
 
 hashTree *createHT(int compare(const void *a, const void *b),
@@ -477,6 +501,13 @@ hashTree *createHT(int compare(const void *a, const void *b),
   pHT->da = createDA(sizeof(hashEntry), compare, &daParams);
   pHT->root = -1;
   return pHT;
+}
+
+hashTree *copyHT(hashTree *pHT) {
+  hashTree *pOther = _safeCalloc(1, sizeof(hashTree));
+  memcpy(pOther, pHT, sizeof(hashTree));
+  pOther->da = copyDA(pHT->da);
+  return pOther;
 }
 
 void setHT(hashTree *pHT, const keyEntry *kEntry, void *value) {

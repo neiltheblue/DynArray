@@ -276,8 +276,6 @@ bool appendDA(dynArray *pDA, dynArray *pSrc) {
   return appended;
 }
 
-
-
 void clearDA(dynArray *pDA) {
   if (pDA) {
     pDA->size = 0;
@@ -295,3 +293,11 @@ void freeDA(dynArray *pDA) {
 }
 
 int compareString(const void *a, const void *b) { return strcmp(a, b); }
+
+void forEachDA(dynArray *pDA, bool call(void *entry, void *ref), void *ref) {
+  size_t limit = pDA->size;
+  bool cont=true;
+  for (size_t i = 0; cont && i < limit; i++) {
+    cont = call(getDA(pDA, i), ref);
+  }
+}

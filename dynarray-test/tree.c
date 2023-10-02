@@ -456,6 +456,59 @@ void test_clear(void **state) {
   assert_int_equal(pHT->root, 0);
 }
 
+void test_copyTree(void **state) {
+
+  for (int i = 0; i < count; i++) {
+    setHT(pHT, &kEntry[i], values[i]);
+  }
+
+  assert_int_equal(pHT->da->size, count);
+  assert_int_equal(pHT->root, 0);
+
+  pOther = copyHT(pHT);
+  clearHT(pHT);
+
+  assert_int_equal(pHT->da->size, 0);
+  assert_int_equal(pHT->root, -1);
+
+  assert_int_equal(pOther->da->size, count);
+  assert_int_equal(pOther->root, 0);
+
+  for (int i = 0; i < count; i++) {
+    assert_true(hasEntryHT(pOther, &kEntry[i]));
+    assert_false(hasEntryHT(pHT, &kEntry[i]));
+  }
+}
+
+void test_retainAll(void **state) {
+
+  for (int i = 0; i < count; i++) {
+    setHT(pHT, &kEntry[i], values[i]);
+    if (i % 2 == 0) {
+      setHT(pOther, &kEntry[i], values[i]);
+    }
+  }
+
+  for (int i = 0; i < count; i++) {
+    assert_true(hasEntryHT(pHT, &kEntry[i]));
+    if (i % 2 == 0) {
+      assert_true(hasEntryHT(pOther, &kEntry[i]));
+    }
+  }
+
+  retainAllHT(pHT, pOther);
+
+  for (int i = 0; i < count; i++) {
+    if (i % 2 == 0) {
+      assert_true(hasEntryHT(pOther, &kEntry[i]));
+      assert_true(hasEntryHT(pHT, &kEntry[i]));
+    } else {
+      assert_false(hasEntryHT(pOther, &kEntry[i]));
+      assert_false(hasEntryHT(pHT, &kEntry[i]));
+    }
+  }
+}
+
 int setupHT(void **state) {
 
   pHT = createHT(compareString, NULL);
@@ -502,7 +555,9 @@ int test_tree(void) {
       cmocka_unit_test_setup_teardown(test_clear, setupHT, teardownHT),
       cmocka_unit_test_setup_teardown(test_deleteCallback, setupHT, teardownHT),
       cmocka_unit_test_setup_teardown(test_hasEntry, setupHT, teardownHT),
-	  cmocka_unit_test_setup_teardown(test_setAllHT, setupHT, teardownHT),
+      cmocka_unit_test_setup_teardown(test_setAllHT, setupHT, teardownHT),
+      cmocka_unit_test_setup_teardown(test_copyTree, setupHT, teardownHT),
+      cmocka_unit_test_setup_teardown(test_retainAll, setupHT, teardownHT),
 
   };
 

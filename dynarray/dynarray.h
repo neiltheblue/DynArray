@@ -246,6 +246,17 @@ int compareString(const void *a, const void *b);
 void clearDA(dynArray *pDA);
 
 /**
+ * @brief Call the function for each entry in the array
+ * 
+ * The method should return 'true' to continue traversing the array.
+ * 
+ * @param pDA the array pointer to traverse
+ * @param call the callback method
+ * @param ref the optional callback reference, may be NULL
+ */
+void forEachDA(dynArray *pDA, bool call(void *entry, void *ref), void *ref);
+
+/**
  * @private
  */
 void *_safeCalloc(const size_t count, const size_t size);

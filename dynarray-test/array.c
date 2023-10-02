@@ -77,8 +77,8 @@ void test_clearDA(void **state) {
 void test_addArrayDA(void **state) {
   pDALng = createDA(sizeof(long), NULL, NULL);
 
-  assert_int_equal(addArrayDA(pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10),
-                   true);
+  assert_int_equal(
+      addArrayDA(pDALng, (long[]){0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10), true);
 
   long i;
   long *read;
@@ -397,6 +397,25 @@ void test_growing(void **state) {
   }
 }
 
+bool counter(void *entry, void *ref) {
+  *((long *)ref) += *((long *)entry);
+  return true;
+}
+
+void test_forEach(void **state) {
+  pDALng = createDA(sizeof(long), NULL, NULL);
+
+  long val;
+  for (int i = 0; i < 10; i++) {
+    val = i;
+    addDA(pDALng, &val);
+  }
+
+  long count = 0;
+  forEachDA(pDALng, counter, &count);
+  assert_int_equal(count, 45);
+}
+
 int setupDA(void **state) {
   pDALng = NULL;
   pDAFlt = NULL;
@@ -433,7 +452,8 @@ int test_array(void) {
       cmocka_unit_test_setup_teardown(test_binSearch, setupDA, teardownDA),
       cmocka_unit_test_setup_teardown(test_subDA, setupDA, teardownDA),
       cmocka_unit_test_setup_teardown(test_appendDA, setupDA, teardownDA),
-	  cmocka_unit_test_setup_teardown(test_clearDA, setupDA, teardownDA),	  
+      cmocka_unit_test_setup_teardown(test_clearDA, setupDA, teardownDA),
+      cmocka_unit_test_setup_teardown(test_forEach, setupDA, teardownDA),
 #ifdef PERF
       cmocka_unit_test_setup_teardown(test_growing, setupDA, teardownDA),
 #endif // PERF
