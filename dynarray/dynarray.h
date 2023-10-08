@@ -59,6 +59,7 @@ typedef struct DynamicArray {
   const struct DynamicArray *parent; ///< the parent array
   int (*compare)(const void *a,
                  const void *b); ///< the default comparator function
+  FILE *fp; ///< the memory mapped file pointer or NULL if not used
 } dynArray;
 
 /**
@@ -95,6 +96,8 @@ typedef struct DynamicArrayParams {
   size_t size;     ///< the initial array size
   float growth;    ///< the growth factor for the array
   size_t capacity; ///< the initial reserved capacity for the array
+  char
+      *filename; ///< the filename for the memory mapped file if used, else NULL
 } dynArrayParams;
 
 /**
@@ -247,9 +250,9 @@ void clearDA(dynArray *pDA);
 
 /**
  * @brief Call the function for each entry in the array
- * 
+ *
  * The method should return 'true' to continue traversing the array.
- * 
+ *
  * @param pDA the array pointer to traverse
  * @param call the callback method
  * @param ref the optional callback reference, may be NULL

@@ -2,6 +2,7 @@
 <CodeLite_Workspace Name="workspace-dynarray" Database="" Version="10000">
   <Project Name="dynarray" Path="dynarray/dynarray.project" Active="No"/>
   <Project Name="dynarray-test" Path="dynarray-test/dynarray-test.project" Active="Yes"/>
+  <Project Name="workspace-test" Path="workspace-test/workspace-test.project" Active="No"/>
   <BuildMatrix>
     <WorkspaceConfiguration Name="Debug">
       <Environment/>
@@ -12,6 +13,7 @@
       <Project Name="dynarray" ConfigName="Debug"/>
       <Project Name="dynarray" ConfigName="Debug"/>
       <Project Name="dynarray-test" ConfigName="Debug"/>
+      <Project Name="workspace-test" ConfigName="Debug"/>
     </WorkspaceConfiguration>
     <WorkspaceConfiguration Name="Release">
       <Environment/>
@@ -22,6 +24,7 @@
       <Project Name="dynarray" ConfigName="Release"/>
       <Project Name="dynarray" ConfigName="Release"/>
       <Project Name="dynarray-test" ConfigName="Release"/>
+      <Project Name="workspace-test" ConfigName="Release"/>
     </WorkspaceConfiguration>
     <WorkspaceConfiguration Name="&lt;New...&gt;">
       <Environment/>
@@ -32,6 +35,7 @@
       <Project Name="dynarray" ConfigName="Debug"/>
       <Project Name="dynarray" ConfigName="Debug"/>
       <Project Name="dynarray-test" ConfigName="Debug"/>
+      <Project Name="workspace-test" ConfigName="Debug"/>
     </WorkspaceConfiguration>
   </BuildMatrix>
 </CodeLite_Workspace>

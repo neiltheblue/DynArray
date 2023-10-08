@@ -1,6 +1,9 @@
 #include <errno.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 #include "dynarray.h"
 
@@ -33,6 +36,7 @@ void *_safeReallocarray(void *ptr, const size_t count, const size_t size) {
  */
 bool _extendCapacityDA(dynArray *pDA) {
   bool extended = false;
+  size_t cap = pDA->capacity;
   if (pDA->size >= pDA->capacity) {
 
     if (pDA->capacity < 1) {
@@ -44,9 +48,23 @@ bool _extendCapacityDA(dynArray *pDA) {
     }
 
     while (pDA->size > pDA->capacity) {
-      pDA->capacity *= pDA->growth;
+      pDA->capacity = ceil(pDA->capacity * pDA->growth);
     }
-    pDA->array = _safeReallocarray(pDA->array, pDA->capacity, pDA->elementSize);
+    if (pDA->fp == NULL) {
+      pDA->array =
+          _safeReallocarray(pDA->array, pDA->capacity, pDA->elementSize);
+    } else {
+      size_t newCap = pDA->capacity * pDA->elementSize;
+      msync(pDA->array, cap * pDA->elementSize, MS_SYNC);
+      munmap(pDA->array, cap * pDA->elementSize);
+      ftruncate(fileno(pDA->fp), newCap);
+      pDA->array = mmap(NULL, newCap, PROT_WRITE | PROT_READ, MAP_SHARED,
+                        fileno(pDA->fp), 0);
+      if (pDA->array == MAP_FAILED) {
+        EXIT_ERROR("Error extending memory map file. Capacity: %lu\n", newCap);
+      }
+    }
+
     extended = true;
   }
   return extended;
@@ -160,14 +178,31 @@ dynArray *createDA(const size_t elementSize,
   if (params->size >= params->capacity) {
     params->capacity = params->size;
   }
+//printf("Add save and open functions");
   pDA = _safeCalloc(1, sizeof(dynArray));
-  pDA->capacity = params->capacity;
+  if (params->filename != NULL) {
+    pDA->fp = fopen(params->filename, "w+");
+  } else {
+    pDA->fp = NULL;
+  }
+
+  pDA->capacity = (params->capacity) < 1 ? 1 : params->capacity;
   pDA->growth = params->growth;
   pDA->size = params->size;
   pDA->elementSize = elementSize;
   pDA->compare = compare;
   pDA->temp = _safeCalloc(1, elementSize);
-  pDA->array = _safeCalloc(pDA->capacity, elementSize);
+  if (pDA->fp == NULL) {
+    pDA->array = _safeCalloc(pDA->capacity, elementSize);
+  } else {
+    size_t cap = pDA->capacity * elementSize;
+    ftruncate(fileno(pDA->fp), cap);
+    pDA->array =
+        mmap(NULL, cap, PROT_WRITE | PROT_READ, MAP_SHARED, fileno(pDA->fp), 0);
+    if (pDA->array == MAP_FAILED) {
+      EXIT_ERROR("Error creating memory map file. Capacity: %lu\n", cap);
+    }
+  }
   pDA->parent = NULL;
   return pDA;
 }
@@ -286,7 +321,12 @@ void freeDA(dynArray *pDA) {
   if (pDA) {
     free(pDA->temp);
     if (pDA->parent == NULL) {
-      free(pDA->array);
+      if (pDA->fp == NULL) {
+        free(pDA->array);
+      }
+    }
+    if (pDA->fp != NULL) {
+      fclose(pDA->fp);
     }
     free(pDA);
   }
@@ -296,7 +336,7 @@ int compareString(const void *a, const void *b) { return strcmp(a, b); }
 
 void forEachDA(dynArray *pDA, bool call(void *entry, void *ref), void *ref) {
   size_t limit = pDA->size;
-  bool cont=true;
+  bool cont = true;
   for (size_t i = 0; cont && i < limit; i++) {
     cont = call(getDA(pDA, i), ref);
   }

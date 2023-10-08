@@ -7,6 +7,7 @@
 
 DEFINE_COMPARE_TYPE(long)
 DEFINE_COMPARE_TYPE(float)
+#define FILENAME "mm.dat"
 
 dynArray *pDALng;
 dynArray *pDAFlt;
@@ -29,6 +30,40 @@ void test_new_params(void **state) {
   assert_int_equal(pDALng->size, 5);
 }
 
+void test_new_mm(void **state) {
+  dynArrayParams params =
+      (dynArrayParams){.capacity = 20, .growth = 2.5, .size = 5};
+  pDALng = createDA(sizeof(long), NULL, &params);
+
+  assert_int_equal(pDALng->capacity, 20);
+  assert_float_equal(pDALng->growth, 2.5, 0.0);
+  assert_int_equal(pDALng->size, 5);
+}
+
+void test_new_params_mm(void **state) {
+  dynArrayParams params = (dynArrayParams){.filename = FILENAME};
+  pDALng = createDA(sizeof(long), NULL, &params);
+
+  assert_int_equal(pDALng->capacity, 1);
+  assert_float_equal(pDALng->growth, 1.5, 0.0);
+  assert_int_equal(pDALng->size, 0);
+  assert_true(pDALng->fp != NULL);
+
+  size_t i, max = 10;
+  for (i = 0; i < max; i++) {
+    assert_int_equal(*(size_t *)(addDA(pDALng, &i)), i);
+	assert_int_equal(*(long *)getDA(pDALng, i), i);
+  }
+  
+  for (i = 0; i < max; i++) {
+	assert_int_equal(*(long *)getDA(pDALng, i), i);	
+  }
+  
+  assert_int_equal(pDALng->capacity, 12);
+  assert_float_equal(pDALng->growth, 1.5, 0.0);
+  assert_int_equal(pDALng->size, 10);
+}
+
 void test_new_params_limits(void **state) {
   dynArrayParams params =
       (dynArrayParams){.capacity = 20, .growth = 0.5, .size = 25};
@@ -47,7 +82,7 @@ void test_addDA(void **state) {
     assert_int_equal(*(size_t *)(addDA(pDALng, &i)), i);
   }
 
-  assert_int_equal(pDALng->capacity, 22);
+  assert_int_equal(pDALng->capacity, 23);
   assert_int_equal(pDALng->size, max);
 }
 
@@ -59,18 +94,18 @@ void test_clearDA(void **state) {
     assert_int_equal(*(size_t *)(addDA(pDALng, &i)), i);
   }
 
-  assert_int_equal(pDALng->capacity, 22);
+  assert_int_equal(pDALng->capacity, 23);
   assert_int_equal(pDALng->size, max);
 
   clearDA(pDALng);
-  assert_int_equal(pDALng->capacity, 22);
+  assert_int_equal(pDALng->capacity, 23);
   assert_int_equal(pDALng->size, 0);
 
   for (i = 0; i < max; i++) {
     assert_int_equal(*(size_t *)(addDA(pDALng, &i)), i);
   }
 
-  assert_int_equal(pDALng->capacity, 22);
+  assert_int_equal(pDALng->capacity, 23);
   assert_int_equal(pDALng->size, max);
 }
 
@@ -430,6 +465,8 @@ int teardownDA(void **state) {
   pDAFlt = NULL;
   freeDA(pDADbl);
   pDADbl = NULL;
+  remove(FILENAME);
+
   return 0;
 }
 
@@ -454,6 +491,7 @@ int test_array(void) {
       cmocka_unit_test_setup_teardown(test_appendDA, setupDA, teardownDA),
       cmocka_unit_test_setup_teardown(test_clearDA, setupDA, teardownDA),
       cmocka_unit_test_setup_teardown(test_forEach, setupDA, teardownDA),
+      cmocka_unit_test_setup_teardown(test_new_params_mm, setupDA, teardownDA),
 #ifdef PERF
       cmocka_unit_test_setup_teardown(test_growing, setupDA, teardownDA),
 #endif // PERF
