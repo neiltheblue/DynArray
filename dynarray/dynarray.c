@@ -22,6 +22,23 @@ void *_safeCalloc(const size_t count, const size_t size) {
 /**
  * @private
  */
+void *_safeMMap(FILE *fp, const size_t count, const size_t size) {
+  void *rtn;
+  size_t cap = FILE_HEADER + (count * size);
+  int fd = fileno(fp);
+  ftruncate(fd, cap);
+  rtn = mmap(NULL, cap, PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
+  if (rtn == MAP_FAILED) {
+    EXIT_ERROR("Error creating memory map file. Capacity: %lu\n",
+               cap + FILE_HEADER);
+  }
+
+  return rtn + FILE_HEADER;
+}
+
+/**
+ * @private
+ */
 void *_safeReallocarray(void *ptr, const size_t count, const size_t size) {
   void *rtn;
   if ((rtn = reallocarray(ptr, count, size)) == NULL && errno == ENOMEM) {
@@ -29,6 +46,75 @@ void *_safeReallocarray(void *ptr, const size_t count, const size_t size) {
                count, size);
   }
   return rtn;
+}
+
+/**
+ * @private
+ */
+void *_safeReMMap(FILE *fp, void *ptr, const size_t cap, const size_t count,
+                  const size_t size) {
+  void *rtn;
+  size_t newCap = FILE_HEADER + (count * size);
+  size_t oldCap = FILE_HEADER + (cap * size);
+  msync(ptr - FILE_HEADER, oldCap, MS_SYNC);
+  munmap(ptr - FILE_HEADER, oldCap);
+  int fd = fileno(fp);
+  ftruncate(fd, newCap);
+  rtn = mmap(NULL, newCap, PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
+  if (rtn == MAP_FAILED) {
+    EXIT_ERROR("Error extending memory map file. Capacity: %lu\n",
+               newCap + FILE_HEADER);
+  }
+
+  return rtn + FILE_HEADER;
+}
+
+/**
+ * @private
+ */
+void _updateMMap(dynArray *pDA) {
+
+  void *pos = pDA->array - FILE_HEADER;
+
+  *(size_t *)pos = (size_t)1;
+  pos += sizeof(size_t);
+
+  *(size_t *)pos = pDA->elementSize;
+  pos += sizeof(size_t);
+
+  *(size_t *)pos = pDA->size;
+  pos += sizeof(size_t);
+
+  *(size_t *)pos = pDA->capacity;
+  pos += sizeof(size_t);
+
+  *(float *)pos = pDA->growth;
+  pos += sizeof(float);
+
+  msync(pDA->array - FILE_HEADER, FILE_HEADER, MS_SYNC);
+}
+
+/**
+ * @private
+ */
+void _restoreMMap(dynArray *pDA, const void *ptr) {
+
+  const void *pos = ptr;
+
+  size_t version = *(size_t *)pos;
+  pos += sizeof(size_t);
+
+  pDA->elementSize = *(size_t *)pos;
+  pos += sizeof(size_t);
+
+  pDA->size = *(size_t *)pos;
+  pos += sizeof(size_t);
+
+  pDA->capacity = *(size_t *)pos;
+  pos += sizeof(size_t);
+
+  pDA->growth = *(float *)pos;
+  pos += sizeof(float);
 }
 
 /**
@@ -54,15 +140,9 @@ bool _extendCapacityDA(dynArray *pDA) {
       pDA->array =
           _safeReallocarray(pDA->array, pDA->capacity, pDA->elementSize);
     } else {
-      size_t newCap = pDA->capacity * pDA->elementSize;
-      msync(pDA->array, cap * pDA->elementSize, MS_SYNC);
-      munmap(pDA->array, cap * pDA->elementSize);
-      ftruncate(fileno(pDA->fp), newCap);
-      pDA->array = mmap(NULL, newCap, PROT_WRITE | PROT_READ, MAP_SHARED,
-                        fileno(pDA->fp), 0);
-      if (pDA->array == MAP_FAILED) {
-        EXIT_ERROR("Error extending memory map file. Capacity: %lu\n", newCap);
-      }
+      pDA->array = _safeReMMap(pDA->fp, pDA->array, cap, pDA->capacity,
+                               pDA->elementSize);
+      _updateMMap(pDA);
     }
 
     extended = true;
@@ -152,6 +232,13 @@ size_t _binarySearch(const dynArray *pDA,
   return found;
 }
 
+void syncDA(dynArray *pDA) {
+  if (pDA->fp == NULL) {
+    size_t cap = FILE_HEADER + (pDA->capacity * pDA->size);
+    msync(pDA->array - FILE_HEADER, cap, MS_SYNC);
+  }
+}
+
 size_t searchDA(dynArray *pDA, const void *value,
                 int compare(const void *a, const void *b)) {
   size_t found = -1;
@@ -161,6 +248,31 @@ size_t searchDA(dynArray *pDA, const void *value,
                           pDA->size - 1);
   }
   return found;
+}
+
+dynArray *loadDA(const char *filename,
+                 int compare(const void *a, const void *b)) {
+  dynArray *pDA;
+
+  pDA = _safeCalloc(1, sizeof(dynArray));
+  pDA->fp = fopen(filename, "a+");
+
+  pDA->compare = compare;
+  pDA->parent = NULL;
+
+  // load the file
+  int fd = fileno(pDA->fp);
+  void *map =
+      mmap(NULL, FILE_HEADER, PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
+  if (map == MAP_FAILED) {
+    EXIT_ERROR("Error creating memory map file. Capacity: %lu\n", FILE_HEADER);
+  }
+  _restoreMMap(pDA, map);
+  pDA->array = map + FILE_HEADER;
+
+  pDA->temp = _safeCalloc(1, pDA->size);
+
+  return pDA;
 }
 
 dynArray *createDA(const size_t elementSize,
@@ -178,7 +290,7 @@ dynArray *createDA(const size_t elementSize,
   if (params->size >= params->capacity) {
     params->capacity = params->size;
   }
-//printf("Add save and open functions");
+
   pDA = _safeCalloc(1, sizeof(dynArray));
   if (params->filename != NULL) {
     pDA->fp = fopen(params->filename, "w+");
@@ -195,13 +307,8 @@ dynArray *createDA(const size_t elementSize,
   if (pDA->fp == NULL) {
     pDA->array = _safeCalloc(pDA->capacity, elementSize);
   } else {
-    size_t cap = pDA->capacity * elementSize;
-    ftruncate(fileno(pDA->fp), cap);
-    pDA->array =
-        mmap(NULL, cap, PROT_WRITE | PROT_READ, MAP_SHARED, fileno(pDA->fp), 0);
-    if (pDA->array == MAP_FAILED) {
-      EXIT_ERROR("Error creating memory map file. Capacity: %lu\n", cap);
-    }
+    pDA->array = _safeMMap(pDA->fp, pDA->capacity, elementSize);
+    _updateMMap(pDA);
   }
   pDA->parent = NULL;
   return pDA;
@@ -326,6 +433,8 @@ void freeDA(dynArray *pDA) {
       }
     }
     if (pDA->fp != NULL) {
+      _updateMMap(pDA);
+      syncDA(pDA);
       fclose(pDA->fp);
     }
     free(pDA);

@@ -52,16 +52,57 @@ void test_new_params_mm(void **state) {
   size_t i, max = 10;
   for (i = 0; i < max; i++) {
     assert_int_equal(*(size_t *)(addDA(pDALng, &i)), i);
-	assert_int_equal(*(long *)getDA(pDALng, i), i);
+    assert_int_equal(*(long *)getDA(pDALng, i), i);
   }
-  
+
   for (i = 0; i < max; i++) {
-	assert_int_equal(*(long *)getDA(pDALng, i), i);	
+    assert_int_equal(*(long *)getDA(pDALng, i), i);
   }
-  
+
   assert_int_equal(pDALng->capacity, 12);
   assert_float_equal(pDALng->growth, 1.5, 0.0);
   assert_int_equal(pDALng->size, 10);
+
+  reverseDA(pDALng);
+  for (i = 0; i < max; i++) {
+    assert_int_equal(*(long *)getDA(pDALng, i), max - i - 1);
+  }
+}
+
+void test_load_mm(void **state) {
+  dynArrayParams params = (dynArrayParams){.filename = FILENAME};
+  pDALng = createDA(sizeof(long), NULL, &params);
+
+  assert_int_equal(pDALng->capacity, 1);
+  assert_float_equal(pDALng->growth, 1.5, 0.0);
+  assert_int_equal(pDALng->size, 0);
+  assert_true(pDALng->fp != NULL);
+
+  size_t i, max = 10;
+  for (i = 0; i < max; i++) {
+    assert_int_equal(*(size_t *)(addDA(pDALng, &i)), i);
+    assert_int_equal(*(long *)getDA(pDALng, i), i);
+  }
+
+  for (i = 0; i < max; i++) {
+    assert_int_equal(*(long *)getDA(pDALng, i), i);
+  }
+
+  assert_int_equal(pDALng->capacity, 12);
+  assert_float_equal(pDALng->growth, 1.5, 0.0);
+  assert_int_equal(pDALng->size, 10);
+
+  freeDA(pDALng);
+  pDALng = loadDA(FILENAME, NULL);
+
+  for (i = 0; i < max; i++) {
+    assert_int_equal(*(long *)getDA(pDALng, i), i);
+  }
+
+  reverseDA(pDALng);
+  for (i = 0; i < max; i++) {
+    assert_int_equal(*(long *)getDA(pDALng, i), max - i - 1);
+  }
 }
 
 void test_new_params_limits(void **state) {
@@ -492,6 +533,7 @@ int test_array(void) {
       cmocka_unit_test_setup_teardown(test_clearDA, setupDA, teardownDA),
       cmocka_unit_test_setup_teardown(test_forEach, setupDA, teardownDA),
       cmocka_unit_test_setup_teardown(test_new_params_mm, setupDA, teardownDA),
+      cmocka_unit_test_setup_teardown(test_load_mm, setupDA, teardownDA),
 #ifdef PERF
       cmocka_unit_test_setup_teardown(test_growing, setupDA, teardownDA),
 #endif // PERF

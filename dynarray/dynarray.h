@@ -46,6 +46,8 @@
   fprintf(stderr, MSG, __VA_ARGS__);                                           \
   exit(EXIT_FAILURE);
 
+#define FILE_HEADER (sizeof(size_t) + (sizeof(size_t) * 3) + sizeof(float))
+
 /**
  * @brief Dynamic array entity
  */
@@ -112,6 +114,17 @@ typedef struct DynamicArrayParams {
 dynArray *createDA(size_t elementSize,
                    int compare(const void *a, const void *b),
                    dynArrayParams *params);
+
+/**
+ * @brief Load a new dynamic array
+ *
+ * @param filename the filename to load from
+ * @param compare the default comparator function
+ * @return An initialised dynamic array that should be freed with
+ * freeDA()
+ */
+dynArray *loadDA(const char *filename,
+                 int compare(const void *a, const void *b));
 
 /**
  * @brief Free a dynamic array instance
@@ -258,6 +271,12 @@ void clearDA(dynArray *pDA);
  * @param ref the optional callback reference, may be NULL
  */
 void forEachDA(dynArray *pDA, bool call(void *entry, void *ref), void *ref);
+
+/**
+ * @brief Sync the array with the file for memory mapped arrays
+ * @param pDA the array pointer to sync
+ */
+void syncDAMap(dynArray *pDA);
 
 /**
  * @private
