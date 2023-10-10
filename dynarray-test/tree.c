@@ -8,8 +8,10 @@
 
 #define COUNT 10
 #define BUFFER 100
+#define FILENAME "mm.dat"
 
 hashTree *pHT = NULL;
+hashTree *pMMHT = NULL;
 hashTree *pOther = NULL;
 const int buffer = BUFFER;
 const int count = COUNT;
@@ -509,10 +511,32 @@ void test_retainAll(void **state) {
   }
 }
 
+void test_mmap(void **state) {
+
+  hashTreeParams params = (hashTreeParams){.filename = FILENAME};
+  pMMHT = createHT(compareString, &params);
+
+  for (int i = 0; i < count; i++) {
+    setHT(pMMHT, &kEntry[i], values[i]);
+  }
+
+  balanceHT(pMMHT);  
+  freeHT(pMMHT);
+
+  pMMHT = loadHT(FILENAME, compareString);
+  
+  assert_int_equal(pMMHT->root, 4);
+
+  for (int i = 0; i < count; i++) {
+    assert_true(hasEntryHT(pMMHT, &kEntry[i]));
+  }
+}
+
 int setupHT(void **state) {
 
   pHT = createHT(compareString, NULL);
   pOther = createHT(compareString, NULL);
+  pMMHT = NULL;
   makeKeyValues(count, keys, values, kEntry);
 
   return 0;
@@ -528,6 +552,13 @@ int teardownHT(void **state) {
     freeHT(pOther);
     pOther = NULL;
   }
+
+  if (pMMHT) {
+    freeHT(pMMHT);
+    pMMHT = NULL;
+  }
+
+  remove(FILENAME);
 
   return 0;
 }
@@ -558,6 +589,7 @@ int test_tree(void) {
       cmocka_unit_test_setup_teardown(test_setAllHT, setupHT, teardownHT),
       cmocka_unit_test_setup_teardown(test_copyTree, setupHT, teardownHT),
       cmocka_unit_test_setup_teardown(test_retainAll, setupHT, teardownHT),
+      cmocka_unit_test_setup_teardown(test_mmap, setupHT, teardownHT),
 
   };
 

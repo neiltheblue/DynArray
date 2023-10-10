@@ -46,7 +46,19 @@
   fprintf(stderr, MSG, __VA_ARGS__);                                           \
   exit(EXIT_FAILURE);
 
-#define FILE_HEADER (sizeof(size_t) + (sizeof(size_t) * 3) + sizeof(float))
+#define FILE_BUFFER 255
+
+/**
+ * @brief Dynamic array file header
+ */
+typedef struct FileHeader {
+  size_t version;     ///< the header version
+  size_t elementSize; ///< the element size
+  size_t size;        ///< the array size
+  size_t capacity;    ///< the array capacity
+  float growth;       ///< the array growth rate
+  char buffer[FILE_BUFFER];   ///< header buffer space
+} fileHeader;
 
 /**
  * @brief Dynamic array entity
@@ -277,6 +289,22 @@ void forEachDA(dynArray *pDA, bool call(void *entry, void *ref), void *ref);
  * @param pDA the array pointer to sync
  */
 void syncDAMap(dynArray *pDA);
+
+/**
+ * @brief Read the header file for the array
+ * @param pDA the array to read from
+ * @param header the header to read into
+ * @return 'true' if the header is read
+ */
+bool readHeaderDA(dynArray *pDA, fileHeader *header);
+
+/**
+ * @brief Save the header buffer value
+ * @param pDA the array pointer
+ * @param buffer the buffer to save
+ * @return 'true' if the buffer was set
+ */
+bool saveHeaderBufferDA(dynArray *pDA, char buffer[]);
 
 /**
  * @private

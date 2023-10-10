@@ -44,6 +44,8 @@ typedef struct HashTree {
 typedef struct HashTreeParams {
   float growth;    ///< the growth factor for the tree
   size_t capacity; ///< the initial reserved capacity for the entries
+  char
+      *filename; ///< the filename for the memory mapped file if used, else NULL
 } hashTreeParams;
 
 /**
@@ -81,6 +83,15 @@ uint32_t hashKey(const keyEntry *kEntry, const uint32_t seed);
  */
 hashTree *createHT(int compare(const void *a, const void *b),
                    hashTreeParams *params);
+
+/**
+ * @brief Load a hash tree
+ * @param filename the filename to load from
+ * @param compare the comparator function
+ * @return An initialised hash tree that should be freed with freeHT()
+ */
+hashTree *loadHT(const char *filename,
+                 int compare(const void *a, const void *b));
 
 /**
  * @brief Copy a hash tree

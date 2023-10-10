@@ -106,9 +106,27 @@ static inline hashEntry *_getIndexNodeHT(const hashTree *pHT,
 /**
  * @private
  */
+static inline size_t _getRootIndexHT(const hashTree *pHT) { return pHT->root; }
+
+/**
+ * @private
+ */
+static inline void _setRootIndexHT(hashTree *pHT, const size_t root) {
+  pHT->root = root;
+
+  if (pHT->da->fp) {
+    char buffer[FILE_BUFFER];
+    *((size_t *)buffer) = pHT->root;
+    saveHeaderBufferDA(pHT->da, buffer);
+  }
+}
+
+/**
+ * @private
+ */
 static inline hashEntry *_getRootNodeHT(const hashTree *pHT,
                                         const size_t nodeIndex) {
-  return _getIndexNodeHT(pHT, pHT->root);
+  return _getIndexNodeHT(pHT, _getRootIndexHT(pHT));
 }
 
 /**
@@ -268,7 +286,7 @@ void _balanceNodeHT(hashTree *pHT, const size_t nodeIndex, const int side) {
       _getIndexNodeHT(pHT, node->left)->parent = nodeIndex;
     }
 
-    if (pHT->root != nodeIndex) {
+    if (_getRootIndexHT(pHT) != nodeIndex) {
       // if not root node
       size_t parentIdx = node->parent;
 
@@ -281,7 +299,7 @@ void _balanceNodeHT(hashTree *pHT, const size_t nodeIndex, const int side) {
       }
     } else {
       // if root node
-      pHT->root = childIdx;
+      _setRootIndexHT(pHT, childIdx);
 
       // update the parent link
       childNode->parent = childIdx;
@@ -349,7 +367,7 @@ void _insertNodeHT(hashTree *pHT, hashEntry *entry, const size_t entryIndex,
 void _reinsertHT(hashTree *pHT, const size_t entryIndex) {
   if (entryIndex != -1) {
     hashEntry *entry = _getIndexNodeHT(pHT, entryIndex);
-    _insertNodeHT(pHT, entry, entryIndex, pHT->root);
+    _insertNodeHT(pHT, entry, entryIndex, _getRootIndexHT(pHT));
   }
 }
 
@@ -361,18 +379,19 @@ void _deleteHT(hashTree *pHT, hashEntry *entry, const size_t nodeIndex,
                             void *value, void *ref),
                void *ref) {
 
-  size_t found = _findNodeIndexHT(pHT, entry, pHT->root);
+  size_t found = _findNodeIndexHT(pHT, entry, _getRootIndexHT(pHT));
 
   if (found != -1) {
     hashEntry *delNode = _getIndexNodeHT(pHT, found);
 
-    if (pHT->root != found) {
+    if (_getRootIndexHT(pHT) != found) {
       hashEntry *parent = _getIndexNodeHT(pHT, delNode->parent);
 
       parent->left = (parent->left == found) ? -1 : parent->left;
       parent->right = (parent->right == found) ? -1 : parent->right;
     } else {
-      pHT->root = (delNode->left != -1) ? delNode->left : delNode->right;
+      _setRootIndexHT(pHT,
+                      (delNode->left != -1) ? delNode->left : delNode->right);
     }
 
     _reinsertHT(pHT, delNode->left);
@@ -391,8 +410,8 @@ void _deleteHT(hashTree *pHT, hashEntry *entry, const size_t nodeIndex,
           (lastParent->left == lastIndex) ? found : lastParent->left;
       lastParent->right =
           (lastParent->right == lastIndex) ? found : lastParent->right;
-      if (pHT->root == lastIndex) {
-        pHT->root = found;
+      if (_getRootIndexHT(pHT) == lastIndex) {
+        _setRootIndexHT(pHT, found);
       }
       hashEntry *foundNode = _getIndexNodeHT(pHT, found);
       if (foundNode->left != -1) {
@@ -440,7 +459,7 @@ void deleteCallbackHT(hashTree *pHT, const keyEntry *kEntry,
                                 .hash = hashKey(kEntry, 0),
                                 .left = -1,
                                 .right = -1};
-  _deleteHT(pHT, &entry, pHT->root, deleted, ref);
+  _deleteHT(pHT, &entry, _getRootIndexHT(pHT), deleted, ref);
 }
 
 unsigned int maxDepthHT(const hashTree *pHT, const size_t nodeIndex) {
@@ -461,7 +480,7 @@ unsigned int maxDepthHT(const hashTree *pHT, const size_t nodeIndex) {
   return depth;
 }
 
-void balanceHT(hashTree *pHT) { _balanceNodeHT(pHT, pHT->root, 0); }
+void balanceHT(hashTree *pHT) { _balanceNodeHT(pHT, _getRootIndexHT(pHT), 0); }
 
 hashEntry *getHT(const hashTree *pHT, const keyEntry *kEntry) {
   hashEntry entry = (hashEntry){.kEntry = kEntry,
@@ -470,14 +489,14 @@ hashEntry *getHT(const hashTree *pHT, const keyEntry *kEntry) {
                                 .left = -1,
                                 .right = -1};
 
-  return _findNodeHT(pHT, &entry, pHT->root);
+  return _findNodeHT(pHT, &entry, _getRootIndexHT(pHT));
 }
 
 void visitNodesHT(const hashTree *pHT,
                   bool visit(const hashEntry *entry, const size_t entryIndex,
                              void *ref),
                   void *ref) {
-  visitSubTreeHT(pHT, pHT->root, visit, ref);
+  visitSubTreeHT(pHT, _getRootIndexHT(pHT), visit, ref);
 }
 
 void visitSubTreeHT(const hashTree *pHT, size_t index,
@@ -495,11 +514,13 @@ hashTree *createHT(int compare(const void *a, const void *b),
     params = &((hashTreeParams){.growth = 1.5, .capacity = 10});
   }
 
-  dynArrayParams daParams = (dynArrayParams){
-      .size = 0, .growth = params->growth, .capacity = params->capacity};
+  dynArrayParams daParams = (dynArrayParams){.size = 0,
+                                             .growth = params->growth,
+                                             .capacity = params->capacity,
+                                             .filename = params->filename};
 
   pHT->da = createDA(sizeof(hashEntry), compare, &daParams);
-  pHT->root = -1;
+  _setRootIndexHT(pHT, -1);
   return pHT;
 }
 
@@ -521,12 +542,13 @@ void setHT(hashTree *pHT, const keyEntry *kEntry, void *value) {
     //  if size zero then add to root
     addDA(pHT->da, &entry);
     // set the root pointer
-    pHT->root = pHT->da->size - 1;
+    _setRootIndexHT(pHT, pHT->da->size - 1);
     // update the parent index pointer to point to itself
-    ((hashEntry *)getDA(pHT->da, pHT->root))->parent = pHT->root;
+    ((hashEntry *)getDA(pHT->da, _getRootIndexHT(pHT)))->parent =
+        _getRootIndexHT(pHT);
   } else {
     // update the root node
-    _addToNodeHT(pHT, &entry, pHT->root);
+    _addToNodeHT(pHT, &entry, _getRootIndexHT(pHT));
   }
 }
 
@@ -556,7 +578,7 @@ bool hasAllHT(const hashTree *pHT, const hashTree *pOther) {
 void clearHT(hashTree *pHT) {
   if (pHT) {
     clearDA(pHT->da);
-    pHT->root = -1;
+    _setRootIndexHT(pHT, -1);
   }
 }
 
@@ -564,15 +586,31 @@ void drawNode(const hashTree *pHT, const size_t nodeIdx, FILE *file) {
   if (file == NULL) {
     file = stdout;
   }
-  if (pHT->da->size > 0 && pHT->root != -1) {
+  if (pHT->da->size > 0 && _getRootIndexHT(pHT) != -1) {
     fprintf(file, "\n");
-    _drawNode(pHT, pHT->root, "", "", file);
+    _drawNode(pHT, _getRootIndexHT(pHT), "", "", file);
   }
   fprintf(file, "\n");
 }
 
 void drawTree(const hashTree *pHT, FILE *file) {
-  drawNode(pHT, pHT->root, file);
+  drawNode(pHT, _getRootIndexHT(pHT), file);
+}
+
+hashTree *loadHT(const char *filename,
+                 int compare(const void *a, const void *b)) {
+
+  dynArray *pDA = loadDA(filename, compare);
+
+  hashTree *pHT = _safeCalloc(1, sizeof(hashTree));
+  pHT->da=pDA;
+  
+  fileHeader header;
+  readHeaderDA(pDA, &header);
+  
+  pHT->root = *(size_t *)(header.buffer);
+
+  return pHT;
 }
 
 void freeHT(hashTree *pHT) {
